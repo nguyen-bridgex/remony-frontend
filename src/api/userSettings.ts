@@ -21,7 +21,7 @@ export const updateUserSettings = async (
   try {
     // Replace with your actual API endpoint
     const response = await fetch(API_URL, {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
