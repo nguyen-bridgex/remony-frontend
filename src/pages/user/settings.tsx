@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import toast from 'react-hot-toast';
 import { updateUserSettings, UpdateSettingsRequest } from '../../api/userSettings';
 
 interface SettingsFormData {
@@ -69,15 +70,15 @@ const UserSettingsPage = () => {
       const result = await updateUserSettings(1, formData); // Replace 1 with actual user ID
       
       if (result.success) {
-        alert('設定を更新しました！');
+        toast.success('設定を更新しました！');
         setIsEditing(false);
         setSettings(formData);
       } else {
-        alert(`エラー: ${result.message}`);
+        toast.success(`結果： ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating settings:', error);
-      alert('設定の更新に失敗しました。');
+      toast.error('設定の更新に失敗しました。');
     } finally {
       setIsLoading(false);
     }
