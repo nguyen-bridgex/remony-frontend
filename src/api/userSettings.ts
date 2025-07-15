@@ -20,7 +20,7 @@ export const updateUserSettings = async (
 ): Promise<UpdateSettingsResponse> => {
   try {
     // Replace with your actual API endpoint
-    const response = await fetch(API_URL, {
+    const response = await fetch('/api/lambda/setting', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
