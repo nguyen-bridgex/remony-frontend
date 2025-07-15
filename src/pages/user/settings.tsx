@@ -16,8 +16,8 @@ const UserSettingsPage = () => {
   const [formData, setFormData] = useState<SettingsFormData>({
     heart_rate_threshold: 50.0,
     skin_temp_threshold: 38.5,
-    heart_rate_alert_enable: false,
-    skin_temp_alert_enable: false,
+    heart_rate_alert_enable: true,
+    skin_temp_alert_enable: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -27,8 +27,8 @@ const UserSettingsPage = () => {
     const mockSettings: SettingsFormData = {
       heart_rate_threshold: 50.0,
       skin_temp_threshold: 38.5,
-      heart_rate_alert_enable: false,
-      skin_temp_alert_enable: false,
+      heart_rate_alert_enable: true,
+      skin_temp_alert_enable: true,
     };
     setSettings(mockSettings);
     setFormData(mockSettings);
