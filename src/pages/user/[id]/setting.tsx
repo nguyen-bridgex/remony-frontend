@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import { updateUserSettings, UpdateSettingsRequest } from '../../api/userSettings';
+import { updateUserSettings, UpdateSettingsRequest } from '../../../api/userSettings';
 
 interface SettingsFormData {
   heart_rate_threshold: number;
@@ -11,9 +11,11 @@ interface SettingsFormData {
 }
 
 const UserSettingsPage = () => {
-  const router = useRouter();   
+  const router = useRouter();
+  const { id } = router.query;
   const [settings, setSettings] = useState<SettingsFormData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState<SettingsFormData>({
     heart_rate_threshold: 50.0,
     skin_temp_threshold: 38.5,
@@ -21,19 +23,26 @@ const UserSettingsPage = () => {
     skin_temp_alert_enable: true,
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Mock settings data - replace with actual API call
   useEffect(() => {
-    const mockSettings: SettingsFormData = {
-      heart_rate_threshold: 50.0,
-      skin_temp_threshold: 38.5,
-      heart_rate_alert_enable: true,
-      skin_temp_alert_enable: true,
-    };
-    setSettings(mockSettings);
-    setFormData(mockSettings);
-  }, []);
+    if (id) {
+      // Simulate API call with user ID
+      const mockSettings: SettingsFormData = {
+        heart_rate_threshold: 50.0,
+        skin_temp_threshold: 38.5,
+        heart_rate_alert_enable: true,
+        skin_temp_alert_enable: true,
+      };
+      
+      setTimeout(() => {
+        setSettings(mockSettings);
+        setFormData(mockSettings);
+        setIsLoading(false);
+      }, 500);
+    }
+  }, [id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -64,23 +73,24 @@ const UserSettingsPage = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    setIsSubmitting(true);
     try {
-      // Call the API to update settings
-      const result = await updateUserSettings(1, formData); // Replace 1 with actual user ID
+      // Call the API to update settings with user ID
+      const userId = parseInt(id as string);
+      const result = await updateUserSettings(userId, formData);
       
       if (result.success) {
         toast.success('設定を更新しました！');
         setIsEditing(false);
         setSettings(formData);
       } else {
-        toast.success(`結果： ${result.message}`);
+        toast.error(`結果： ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating settings:', error);
       toast.error('設定の更新に失敗しました。');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -96,12 +106,36 @@ const UserSettingsPage = () => {
     setErrors({});
   };
 
-  if (!settings) {
+  const handleBackToUser = () => {
+    router.push(`/user/${id}`);
+  };
+
+  const handleBackToUserList = () => {
+    router.push('/users');
+  };
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-gray-600 mt-4 text-center">設定を読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!settings) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+          <p className="text-gray-600 text-lg">設定が見つかりませんでした</p>
+          <button
+            onClick={handleBackToUser}
+            className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            ユーザー詳細に戻る
+          </button>
         </div>
       </div>
     );
@@ -119,12 +153,18 @@ const UserSettingsPage = () => {
                   アラート設定
                 </h1>
                 <p className="text-blue-100 mt-2">
-                  心拍数と皮膚温の監視設定
+                  Remony - ユーザーID: {id} の監視設定
                 </p>
               </div>
               <div className="flex space-x-4">
                 <button
-                  onClick={() => router.push('/user/detail')}
+                  onClick={handleBackToUserList}
+                  className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                >
+                  ユーザー一覧
+                </button>
+                <button
+                  onClick={handleBackToUser}
                   className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
                 >
                   ユーザー詳細
@@ -228,15 +268,15 @@ const UserSettingsPage = () => {
                 <div className="flex space-x-4 pt-4">
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                     className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
-                    {isLoading ? '保存中...' : '設定を保存'}
+                    {isSubmitting ? '保存中...' : '設定を保存'}
                   </button>
                   <button
                     type="button"
                     onClick={handleCancel}
-                    disabled={isLoading}
+                    disabled={isSubmitting}
                     className="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     キャンセル

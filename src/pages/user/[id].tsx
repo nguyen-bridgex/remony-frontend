@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import toast from 'react-hot-toast';
 import { User, UserFormData, RoleOptions, GenderOptions } from '../../types/user';
 
 const UserDetail = () => {
   const router = useRouter();
+  const { id } = router.query;
   const [user, setUser] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState<UserFormData>({
     deviceId: '',
     name: '',
@@ -20,9 +23,9 @@ const UserDetail = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Mock user data - in a real app, this would come from your backend
-  useEffect(() => {
-    const mockUser: User = {
+  // Mock users data - in a real app, this would come from your backend
+  const mockUsers: User[] = [
+    {
       id: 1,
       deviceId: '00:1B:44:11:3A:B7',
       name: '田中太郎',
@@ -33,20 +36,82 @@ const UserDetail = () => {
       weight: 70,
       height: 175,
       role: 0
-    };
-    setUser(mockUser);
-    setFormData({
-      deviceId: mockUser.deviceId,
-      name: mockUser.name,
-      email: mockUser.email,
-      phone: mockUser.phone,
-      gender: mockUser.gender,
-      birthday: mockUser.birthday,
-      weight: mockUser.weight,
-      height: mockUser.height,
-      role: mockUser.role
-    });
-  }, []);
+    },
+    {
+      id: 2,
+      deviceId: '00:1B:44:11:3A:B8',
+      name: '佐藤花子',
+      email: 'sato.hanako@example.com',
+      phone: '090-2345-6789',
+      gender: false,
+      birthday: '1992-03-22',
+      weight: 55,
+      height: 160,
+      role: 0
+    },
+    {
+      id: 3,
+      deviceId: '00:1B:44:11:3A:B9',
+      name: '鈴木一郎',
+      email: 'suzuki.ichiro@example.com',
+      phone: '090-3456-7890',
+      gender: true,
+      birthday: '1985-07-10',
+      weight: 80,
+      height: 180,
+      role: 1
+    },
+    {
+      id: 4,
+      deviceId: '00:1B:44:11:3A:C0',
+      name: '高橋美穂',
+      email: 'takahashi.miho@example.com',
+      phone: '090-4567-8901',
+      gender: false,
+      birthday: '1988-11-05',
+      weight: 62,
+      height: 165,
+      role: 0
+    },
+    {
+      id: 5,
+      deviceId: '00:1B:44:11:3A:C1',
+      name: '山田次郎',
+      email: 'yamada.jiro@example.com',
+      phone: '090-5678-9012',
+      gender: true,
+      birthday: '1995-09-18',
+      weight: 65,
+      height: 170,
+      role: 0
+    }
+  ];
+
+  useEffect(() => {
+    if (id) {
+      const userId = parseInt(id as string);
+      const foundUser = mockUsers.find(u => u.id === userId);
+      
+      if (foundUser) {
+        setUser(foundUser);
+        setFormData({
+          deviceId: foundUser.deviceId,
+          name: foundUser.name,
+          email: foundUser.email,
+          phone: foundUser.phone,
+          gender: foundUser.gender,
+          birthday: foundUser.birthday,
+          weight: foundUser.weight,
+          height: foundUser.height,
+          role: foundUser.role
+        });
+      } else {
+        toast.error('ユーザーが見つかりませんでした');
+        router.push('/users');
+      }
+      setIsLoading(false);
+    }
+  }, [id, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -87,7 +152,7 @@ const UserDetail = () => {
     if (validateForm()) {
       // Here you would typically send the data to your backend
       console.log('User updated:', formData);
-      alert('ユーザー情報を更新しました！');
+      toast.success('ユーザー情報を更新しました！');
       setIsEditing(false);
       // Update the user state with new data
       if (user) {
@@ -127,12 +192,28 @@ const UserDetail = () => {
     });
   };
 
-  if (!user) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-gray-600 mt-4 text-center">ユーザー情報を読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+          <p className="text-gray-600 text-lg">ユーザーが見つかりませんでした</p>
+          <button
+            onClick={() => router.push('/users')}
+            className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            ユーザー一覧に戻る
+          </button>
         </div>
       </div>
     );
@@ -155,10 +236,22 @@ const UserDetail = () => {
               </div>
               <div className="flex space-x-4">
                 <button
+                  onClick={() => router.push('/users')}
+                  className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                >
+                  ユーザー一覧
+                </button>
+                <button
                   onClick={() => router.push('/user/register')}
                   className="bg-white text-blue-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors"
                 >
                   新規ユーザー
+                </button>
+                <button
+                  onClick={() => router.push(`/user/${id}/setting`)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-400 transition-colors"
+                >
+                  設定
                 </button>
                 {!isEditing && (
                   <button
