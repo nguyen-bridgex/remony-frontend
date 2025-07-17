@@ -1,6 +1,3 @@
-export const API_URL = "https://huuz9eft1e.execute-api.ap-northeast-1.amazonaws.com/prod/setting";
-
-// API function for user settings
 export interface UpdateSettingsRequest {
   heart_rate_threshold: number;
   skin_temp_threshold: number;
@@ -19,8 +16,7 @@ export const updateUserSettings = async (
   settings: UpdateSettingsRequest
 ): Promise<UpdateSettingsResponse> => {
   try {
-    // Replace with your actual API endpoint
-    const response = await fetch('/api/lambda/setting', {
+    const response = await fetch('/api/updateSettings', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -42,6 +38,44 @@ export const updateUserSettings = async (
     return {
       success: false,
       message: error instanceof Error ? error.message : 'An error occurred while updating settings',
+    };
+  }
+}; 
+
+export const getUserSettings = async (
+  userId: number,
+): Promise<UpdateSettingsResponse> => {
+  try {
+    const response = await fetch('/api/getSettings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId
+    }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      message: 'Settings fetched successfully',
+      data: {
+        heart_rate_threshold: result.settings.heart_rate_threshold,
+        skin_temp_threshold: result.settings.skin_temp_threshold,
+        heart_rate_alert_enable: result.settings.heart_rate_alert_enabled,
+        skin_temp_alert_enable: result.settings.skin_temp_alert_enabled,
+      },
+    };
+  } catch (error) {
+    console.error('Error getting settings:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'An error occurred while getting settings',
     };
   }
 }; 

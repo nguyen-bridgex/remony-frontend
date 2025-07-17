@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import { updateUserSettings, UpdateSettingsRequest } from '../../../api/userSettings';
+import { updateUserSettings, getUserSettings, UpdateSettingsRequest } from '../../../api/userSettings';
 
 interface SettingsFormData {
   heart_rate_threshold: number;
@@ -25,23 +25,34 @@ const UserSettingsPage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Mock settings data - replace with actual API call
+  // Fetch user settings data using the API
   useEffect(() => {
-    if (id) {
-      // Simulate API call with user ID
-      const mockSettings: SettingsFormData = {
-        heart_rate_threshold: 50.0,
-        skin_temp_threshold: 38.5,
-        heart_rate_alert_enable: true,
-        skin_temp_alert_enable: true,
-      };
-      
-      setTimeout(() => {
-        setSettings(mockSettings);
-        setFormData(mockSettings);
-        setIsLoading(false);
-      }, 500);
-    }
+    const fetchUserSettings = async () => {
+      if (id) {
+        setIsLoading(true);
+        try {
+          const userId = parseInt(id as string);
+          const result = await getUserSettings(userId);
+          
+          if (result.success && result.data) {
+            setSettings(result.data);
+            setFormData(result.data);
+          } else {
+            console.error('Failed to fetch settings:', result.message);
+            toast.error(`設定の取得に失敗しました: ${result.message}`);
+            setSettings(null);
+          }
+        } catch (error) {
+          console.error('Error fetching settings:', error);
+          toast.error('設定の取得中にエラーが発生しました。');
+          setSettings(null);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchUserSettings();
   }, [id]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
