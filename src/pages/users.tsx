@@ -1,83 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import toast from 'react-hot-toast';
 import { User, RoleOptions } from '../types/user';
+import { getUsers } from '../api/users';
 
 const UserListPage = () => {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
-  // Mock users data - in a real app, this would come from your backend
+  // Fetch users data from API
   useEffect(() => {
-    const mockUsers: User[] = [
-      {
-        id: 1,
-        deviceId: '00:1B:44:11:3A:B7',
-        name: '田中太郎',
-        email: 'tanaka.taro@example.com',
-        phone: '090-1234-5678',
-        gender: true,
-        birthday: '1990-01-15',
-        weight: 70,
-        height: 175,
-        role: 0
-      },
-      {
-        id: 2,
-        deviceId: '00:1B:44:11:3A:B8',
-        name: '佐藤花子',
-        email: 'sato.hanako@example.com',
-        phone: '090-2345-6789',
-        gender: false,
-        birthday: '1992-03-22',
-        weight: 55,
-        height: 160,
-        role: 0
-      },
-      {
-        id: 3,
-        deviceId: '00:1B:44:11:3A:B9',
-        name: '鈴木一郎',
-        email: 'suzuki.ichiro@example.com',
-        phone: '090-3456-7890',
-        gender: true,
-        birthday: '1985-07-10',
-        weight: 80,
-        height: 180,
-        role: 1
-      },
-      {
-        id: 4,
-        deviceId: '00:1B:44:11:3A:C0',
-        name: '高橋美穂',
-        email: 'takahashi.miho@example.com',
-        phone: '090-4567-8901',
-        gender: false,
-        birthday: '1988-11-05',
-        weight: 62,
-        height: 165,
-        role: 0
-      },
-      {
-        id: 5,
-        deviceId: '00:1B:44:11:3A:C1',
-        name: '山田次郎',
-        email: 'yamada.jiro@example.com',
-        phone: '090-5678-9012',
-        gender: true,
-        birthday: '1995-09-18',
-        weight: 65,
-        height: 170,
-        role: 0
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const result = await getUsers();
+        
+        if (result.success && result.data) {
+          setUsers(result.data);
+        } else {
+          console.error('Failed to fetch users:', result.message);
+          toast.error(`ユーザーの取得に失敗しました: ${result.message}`);
+          setUsers([]);
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        toast.error('ユーザーの取得中にエラーが発生しました。');
+        setUsers([]);
+      } finally {
+        setIsLoading(false);
       }
-    ];
-    
-    // Simulate loading time
-    setTimeout(() => {
-      setUsers(mockUsers);
-      setIsLoading(false);
-    }, 500);
+    };
+
+    fetchUsers();
   }, []);
 
   const handleUserClick = (userId: number) => {
@@ -91,8 +49,24 @@ const UserListPage = () => {
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone.includes(searchTerm)
+    user.phone.includes(searchTerm) ||
+    user.lineid.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -150,7 +124,7 @@ const UserListPage = () => {
             <div className="max-w-md">
               <input
                 type="text"
-                placeholder="名前、メールアドレス、電話番号で検索..."
+                placeholder="名前、メールアドレス、電話番号、LINE IDで検索..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -173,7 +147,7 @@ const UserListPage = () => {
                     プロフィール
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    デバイス
+                    クライアント・LINE
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     権限
@@ -181,7 +155,7 @@ const UserListPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
+                {paginatedUsers.map((user) => (
                   <tr
                     key={user.id}
                     onClick={() => handleUserClick(user.id)}
@@ -212,15 +186,18 @@ const UserListPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {user.gender ? '男性' : '女性'} · {calculateAge(user.birthday)}歳
+                        {user.gender === 1 ? '男性' : '女性'} · {calculateAge(user.birthday)}歳
                       </div>
                       <div className="text-sm text-gray-500">
                         {user.height}cm · {user.weight}kg
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 font-mono">
-                        {user.deviceId}
+                      <div className="text-sm text-gray-900">
+                        Client ID: {user.client_id}
+                      </div>
+                      <div className="text-sm text-gray-500 font-mono">
+                        {user.lineid}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -239,28 +216,82 @@ const UserListPage = () => {
           </div>
 
           {/* No results message */}
-          {filteredUsers.length === 0 && (
+          {filteredUsers.length === 0 && !isLoading && (
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg">
-                検索結果が見つかりませんでした
+                {searchTerm ? '検索結果が見つかりませんでした' : 'ユーザーが見つかりませんでした'}
               </div>
               <div className="text-gray-400 text-sm mt-2">
-                検索条件を変更してください
+                {searchTerm ? '検索条件を変更してください' : 'ユーザーを追加してください'}
               </div>
             </div>
           )}
 
-          {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                合計 {filteredUsers.length} 件のユーザー
-              </div>
-              <div className="text-sm text-gray-500">
-                クリックして詳細を表示
+          {/* Pagination */}
+          {filteredUsers.length > 0 && (
+            <div className="bg-gray-50 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-500">
+                  合計 {filteredUsers.length} 件のユーザー ({startIndex + 1} - {Math.min(endIndex, filteredUsers.length)} 件を表示)
+                </div>
+                
+                {totalPages > 1 && (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      前へ
+                    </button>
+                    
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                        // Show first page, last page, current page, and pages around current page
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={`px-3 py-2 text-sm font-medium rounded-md ${
+                                currentPage === page
+                                  ? 'bg-blue-600 text-white'
+                                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        } else if (
+                          (page === currentPage - 2 && currentPage > 3) ||
+                          (page === currentPage + 2 && currentPage < totalPages - 2)
+                        ) {
+                          return (
+                            <span key={page} className="px-2 py-2 text-sm text-gray-400">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      次へ
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

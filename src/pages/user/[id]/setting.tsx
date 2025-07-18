@@ -8,6 +8,7 @@ interface SettingsFormData {
   skin_temp_threshold: number;
   heart_rate_alert_enable: boolean;
   skin_temp_alert_enable: boolean;
+  alert_message: string;
 }
 
 const UserSettingsPage = () => {
@@ -21,6 +22,7 @@ const UserSettingsPage = () => {
     skin_temp_threshold: 38.5,
     heart_rate_alert_enable: true,
     skin_temp_alert_enable: true,
+    alert_message: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -275,6 +277,28 @@ const UserSettingsPage = () => {
                   </div>
                 </div>
 
+                {/* Alert Message Section */}
+                <div className="bg-blue-50 p-6 rounded-xl">
+                  <h2 className="text-2xl font-bold text-blue-800 mb-6">アラートメッセージ設定</h2>
+                  <div className="space-y-6">
+                    <div>
+                      <label htmlFor="alert_message" className="block text-sm font-medium text-gray-700 mb-2">
+                        アラートメッセージ
+                      </label>
+                      <textarea
+                        id="alert_message"
+                        name="alert_message"
+                        value={formData.alert_message}
+                        onChange={(e) => setFormData(prev => ({ ...prev, alert_message: e.target.value }))}
+                        rows={3}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        placeholder="アラート時に表示するメッセージを入力してください..."
+                      />
+                      {errors.alert_message && <p className="text-red-500 text-sm mt-1">{errors.alert_message}</p>}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Action Buttons */}
                 <div className="flex space-x-4 pt-4">
                   <button
@@ -324,6 +348,17 @@ const UserSettingsPage = () => {
                       <h3 className="text-sm font-medium text-gray-600 mb-1">皮膚温閾値（下限）</h3>
                       <p className="text-2xl font-bold text-orange-600">{settings.skin_temp_threshold}℃</p>
                     </div>
+                  </div>
+                </div>
+                
+                {/* Alert Message Display */}
+                <div className="bg-blue-50 p-6 rounded-xl">
+                  <h2 className="text-2xl font-bold text-blue-800 mb-6">アラートメッセージ設定</h2>
+                  <div className="bg-white p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-gray-600 mb-2">アラートメッセージ</h3>
+                    <p className="text-gray-800 text-base leading-relaxed">
+                      {settings.alert_message || 'メッセージが設定されていません'}
+                    </p>
                   </div>
                 </div>
               </div>

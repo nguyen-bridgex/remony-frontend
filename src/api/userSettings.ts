@@ -3,6 +3,7 @@ export interface UpdateSettingsRequest {
   skin_temp_threshold: number;
   heart_rate_alert_enable: boolean;
   skin_temp_alert_enable: boolean;
+  alert_message: string;
 }
 
 export interface UpdateSettingsResponse {
@@ -69,6 +70,7 @@ export const getUserSettings = async (
         skin_temp_threshold: result.settings.skin_temp_threshold,
         heart_rate_alert_enable: result.settings.heart_rate_alert_enabled,
         skin_temp_alert_enable: result.settings.skin_temp_alert_enabled,
+        alert_message: result.settings.alert_message || '',
       },
     };
   } catch (error) {

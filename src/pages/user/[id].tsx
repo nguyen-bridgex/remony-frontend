@@ -10,11 +10,12 @@ const UserDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState<UserFormData>({
-    deviceId: '',
     name: '',
+    client_id: 0,
+    lineid: '',
     email: '',
     phone: '',
-    gender: true,
+    gender: 1,
     birthday: '',
     weight: 0,
     height: 0,
@@ -27,11 +28,12 @@ const UserDetail = () => {
   const mockUsers: User[] = [
     {
       id: 1,
-      deviceId: '00:1B:44:11:3A:B7',
       name: '田中太郎',
+      client_id: 67,
+      lineid: 'tanaka@medistep',
       email: 'tanaka.taro@example.com',
       phone: '090-1234-5678',
-      gender: true,
+      gender: 1,
       birthday: '1990-01-15',
       weight: 70,
       height: 175,
@@ -39,11 +41,12 @@ const UserDetail = () => {
     },
     {
       id: 2,
-      deviceId: '00:1B:44:11:3A:B8',
       name: '佐藤花子',
+      client_id: 68,
+      lineid: 'sato@medistep',
       email: 'sato.hanako@example.com',
       phone: '090-2345-6789',
-      gender: false,
+      gender: 0,
       birthday: '1992-03-22',
       weight: 55,
       height: 160,
@@ -51,11 +54,12 @@ const UserDetail = () => {
     },
     {
       id: 3,
-      deviceId: '00:1B:44:11:3A:B9',
       name: '鈴木一郎',
+      client_id: 69,
+      lineid: 'suzuki@medistep',
       email: 'suzuki.ichiro@example.com',
       phone: '090-3456-7890',
-      gender: true,
+      gender: 1,
       birthday: '1985-07-10',
       weight: 80,
       height: 180,
@@ -63,11 +67,12 @@ const UserDetail = () => {
     },
     {
       id: 4,
-      deviceId: '00:1B:44:11:3A:C0',
       name: '高橋美穂',
+      client_id: 70,
+      lineid: 'takahashi@medistep',
       email: 'takahashi.miho@example.com',
       phone: '090-4567-8901',
-      gender: false,
+      gender: 0,
       birthday: '1988-11-05',
       weight: 62,
       height: 165,
@@ -75,11 +80,12 @@ const UserDetail = () => {
     },
     {
       id: 5,
-      deviceId: '00:1B:44:11:3A:C1',
       name: '山田次郎',
+      client_id: 71,
+      lineid: 'yamada@medistep',
       email: 'yamada.jiro@example.com',
       phone: '090-5678-9012',
-      gender: true,
+      gender: 1,
       birthday: '1995-09-18',
       weight: 65,
       height: 170,
@@ -95,8 +101,9 @@ const UserDetail = () => {
       if (foundUser) {
         setUser(foundUser);
         setFormData({
-          deviceId: foundUser.deviceId,
           name: foundUser.name,
+          client_id: foundUser.client_id,
+          lineid: foundUser.lineid,
           email: foundUser.email,
           phone: foundUser.phone,
           gender: foundUser.gender,
@@ -124,14 +131,15 @@ const UserDetail = () => {
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      gender: e.target.value === 'true'
+      gender: parseInt(e.target.value)
     }));
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.deviceId.trim()) newErrors.deviceId = 'デバイスIDは必須です';
+    if (formData.client_id <= 0) newErrors.client_id = 'クライアントIDは必須です';
+    if (!formData.lineid.trim()) newErrors.lineid = 'LINE IDは必須です';
     if (!formData.name.trim()) newErrors.name = '名前は必須です';
     if (!formData.email.trim()) newErrors.email = 'メールアドレスは必須です';
     if (!formData.phone.trim()) newErrors.phone = '電話番号は必須です';
@@ -169,8 +177,9 @@ const UserDetail = () => {
     setIsEditing(false);
     if (user) {
       setFormData({
-        deviceId: user.deviceId,
         name: user.name,
+        client_id: user.client_id,
+        lineid: user.lineid,
         email: user.email,
         phone: user.phone,
         gender: user.gender,
@@ -270,21 +279,39 @@ const UserDetail = () => {
             {isEditing ? (
               /* Edit Form */
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Device ID */}
+                {/* Client ID */}
                 <div>
-                  <label htmlFor="deviceId" className="block text-sm font-medium text-gray-700 mb-2">
-                    デバイスID（MACアドレス）
+                  <label htmlFor="client_id" className="block text-sm font-medium text-gray-700 mb-2">
+                    クライアントID
+                  </label>
+                  <input
+                    type="number"
+                    id="client_id"
+                    name="client_id"
+                    value={formData.client_id}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="クライアントIDを入力してください"
+                    min="1"
+                  />
+                  {errors.client_id && <p className="text-red-500 text-sm mt-1">{errors.client_id}</p>}
+                </div>
+
+                {/* LINE ID */}
+                <div>
+                  <label htmlFor="lineid" className="block text-sm font-medium text-gray-700 mb-2">
+                    LINE ID
                   </label>
                   <input
                     type="text"
-                    id="deviceId"
-                    name="deviceId"
-                    value={formData.deviceId}
+                    id="lineid"
+                    name="lineid"
+                    value={formData.lineid}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="MACアドレスを入力してください"
+                    placeholder="LINE IDを入力してください"
                   />
-                  {errors.deviceId && <p className="text-red-500 text-sm mt-1">{errors.deviceId}</p>}
+                  {errors.lineid && <p className="text-red-500 text-sm mt-1">{errors.lineid}</p>}
                 </div>
 
                 {/* Name */}
@@ -455,8 +482,13 @@ const UserDetail = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">デバイスID</h3>
-                    <p className="text-lg font-semibold text-gray-900">{user.deviceId}</p>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">クライアントID</h3>
+                    <p className="text-lg font-semibold text-gray-900">{user.client_id}</p>
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">LINE ID</h3>
+                    <p className="text-lg font-semibold text-gray-900">{user.lineid}</p>
                   </div>
 
                   <div className="bg-gray-50 p-4 rounded-lg">
@@ -486,7 +518,7 @@ const UserDetail = () => {
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="text-sm font-medium text-gray-600 mb-1">性別</h3>
                     <p className="text-lg font-semibold text-gray-900">
-                      {user.gender ? '男性' : '女性'}
+                      {user.gender === 1 ? '男性' : '女性'}
                     </p>
                   </div>
 

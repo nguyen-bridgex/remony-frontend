@@ -5,11 +5,12 @@ import { UserFormData, RoleOptions, GenderOptions } from '../../types/user';
 const UserRegister = () => {
   const router = useRouter();
   const [formData, setFormData] = useState<UserFormData>({
-    deviceId: '',
     name: '',
+    client_id: 0,
+    lineid: '',
     email: '',
     phone: '',
-    gender: true,
+    gender: 1,
     birthday: '',
     weight: 0,
     height: 0,
@@ -29,14 +30,15 @@ const UserRegister = () => {
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
-      gender: e.target.value === 'true'
+      gender: parseInt(e.target.value)
     }));
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (!formData.deviceId.trim()) newErrors.deviceId = 'デバイスIDは必須です';
+    if (formData.client_id <= 0) newErrors.client_id = 'クライアントIDは必須です';
+    if (!formData.lineid.trim()) newErrors.lineid = 'LINE IDは必須です';
     if (!formData.name.trim()) newErrors.name = '名前は必須です';
     if (!formData.email.trim()) newErrors.email = 'メールアドレスは必須です';
     if (!formData.phone.trim()) newErrors.phone = '電話番号は必須です';
@@ -76,21 +78,39 @@ const UserRegister = () => {
           </div>
           
           <form onSubmit={handleSubmit} className="px-6 py-8 space-y-6">
-            {/* Device ID */}
+            {/* Client ID */}
             <div>
-              <label htmlFor="deviceId" className="block text-sm font-medium text-gray-700 mb-2">
-                デバイスID（MACアドレス）
+              <label htmlFor="client_id" className="block text-sm font-medium text-gray-700 mb-2">
+                クライアントID
+              </label>
+              <input
+                type="number"
+                id="client_id"
+                name="client_id"
+                value={formData.client_id}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder="クライアントIDを入力してください"
+                min="1"
+              />
+              {errors.client_id && <p className="text-red-500 text-sm mt-1">{errors.client_id}</p>}
+            </div>
+
+            {/* LINE ID */}
+            <div>
+              <label htmlFor="lineid" className="block text-sm font-medium text-gray-700 mb-2">
+                LINE ID
               </label>
               <input
                 type="text"
-                id="deviceId"
-                name="deviceId"
-                value={formData.deviceId}
+                id="lineid"
+                name="lineid"
+                value={formData.lineid}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                placeholder="MACアドレスを入力してください"
+                placeholder="LINE IDを入力してください"
               />
-              {errors.deviceId && <p className="text-red-500 text-sm mt-1">{errors.deviceId}</p>}
+              {errors.lineid && <p className="text-red-500 text-sm mt-1">{errors.lineid}</p>}
             </div>
 
             {/* Name */}
