@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { UserFormData, RoleOptions, GenderOptions } from '../../types/user';
+import { UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions } from '../../types/user';
 
 const UserRegister = () => {
   const router = useRouter();
@@ -14,7 +14,9 @@ const UserRegister = () => {
     birthday: '',
     weight: 0,
     height: 0,
-    role: 0
+    address: '',
+    vital_device: 'remony',
+    notification_target: 'line'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -45,6 +47,7 @@ const UserRegister = () => {
     if (!formData.birthday) newErrors.birthday = '生年月日は必須です';
     if (formData.weight <= 0) newErrors.weight = '体重は0より大きい値を入力してください';
     if (formData.height <= 0) newErrors.height = '身長は0より大きい値を入力してください';
+    if (!formData.address.trim()) newErrors.address = '住所は必須です';
     
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = '有効なメールアドレスを入力してください';
@@ -59,8 +62,8 @@ const UserRegister = () => {
     if (validateForm()) {
       // Here you would typically send the data to your backend
       console.log('Form submitted:', formData);
-      alert('ユーザー登録が完了しました！');
-      router.push('/user/detail');
+      alert('利用者登録が完了しました！');
+      router.push('/users');
     }
   };
 
@@ -70,10 +73,10 @@ const UserRegister = () => {
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
             <h1 className="text-3xl font-bold text-white text-center">
-              ユーザー登録
+              利用者登録
             </h1>
             <p className="text-blue-100 text-center mt-2">
-              Remonyへようこそ - 新しいアカウントを作成しましょう
+              見守りサービス - 新しい利用者を登録しましょう
             </p>
           </div>
           
@@ -164,6 +167,23 @@ const UserRegister = () => {
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
 
+            {/* Address */}
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                住所
+              </label>
+              <input
+                type="text"
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                placeholder="住所を入力してください"
+              />
+              {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+            </div>
+
             {/* Gender */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -239,19 +259,19 @@ const UserRegister = () => {
               </div>
             </div>
 
-            {/* Role */}
+            {/* Vital Device */}
             <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
-                権限
+              <label htmlFor="vital_device" className="block text-sm font-medium text-gray-700 mb-2">
+                バイタル機器
               </label>
               <select
-                id="role"
-                name="role"
-                value={formData.role}
+                id="vital_device"
+                name="vital_device"
+                value={formData.vital_device}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               >
-                {RoleOptions.map((option) => (
+                {VitalDeviceOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -259,13 +279,34 @@ const UserRegister = () => {
               </select>
             </div>
 
+            {/* Notification Target */}
+            {/* <div>
+              <label htmlFor="notification_target" className="block text-sm font-medium text-gray-700 mb-2">
+                通知先設定
+              </label>
+              <select
+                id="notification_target"
+                name="notification_target"
+                value={formData.notification_target}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              >
+                {NotificationTargetOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-gray-500 mt-1">MVPでは処理の実装は行いません</p>
+            </div> */}
+
             {/* Submit Button */}
             <div className="pt-4">
               <button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-105"
               >
-                ユーザー登録
+                利用者登録
               </button>
             </div>
           </form>

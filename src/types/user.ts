@@ -5,11 +5,11 @@ export interface User {
   lineid: string;
   email: string;
   phone: string;
-  gender: number; // 1 = male, 0 = female (changed from boolean to number)
+  gender: number; // 1 = male, 0 = female
   birthday: string; // YYYY-MM-DD format
   weight: number;
   height: number;
-  role: number; // 0 = user, 1 = admin
+  address: string; // 住所を追加
 }
 
 export interface UserFormData {
@@ -22,15 +22,22 @@ export interface UserFormData {
   birthday: string;
   weight: number;
   height: number;
-  role: number;
+  address: string; // 住所を追加
+  vital_device: string; // バイタル機器を追加
+  notification_target: string; // 通知先を追加
 }
-
-export const RoleOptions = [
-  { value: 0, label: 'ユーザー' },
-  { value: 1, label: '管理者' }
-];
 
 export const GenderOptions = [
   { value: 1, label: '男性' },
   { value: 0, label: '女性' }
+];
+
+export const VitalDeviceOptions = [
+  { value: 'remony', label: 'Remony' }
+];
+
+export const NotificationTargetOptions = [
+  { value: 'email', label: 'メール' },
+  { value: 'line', label: 'LINE' },
+  { value: 'both', label: 'メール・LINE両方' }
 ]; 

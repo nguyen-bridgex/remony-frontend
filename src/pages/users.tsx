@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import { User, RoleOptions } from '../types/user';
+import { User, GenderOptions } from '../types/user';
 import { getUsers } from '../api/users';
 
 const UserListPage = () => {
@@ -23,12 +23,12 @@ const UserListPage = () => {
           setUsers(result.data);
         } else {
           console.error('Failed to fetch users:', result.message);
-          toast.error(`ユーザーの取得に失敗しました: ${result.message}`);
+          toast.error(`利用者の取得に失敗しました: ${result.message}`);
           setUsers([]);
         }
       } catch (error) {
         console.error('Error fetching users:', error);
-        toast.error('ユーザーの取得中にエラーが発生しました。');
+        toast.error('利用者の取得中にエラーが発生しました。');
         setUsers([]);
       } finally {
         setIsLoading(false);
@@ -39,7 +39,7 @@ const UserListPage = () => {
   }, []);
 
   const handleUserClick = (userId: number) => {
-    router.push(`/user/${userId}`);
+    router.push(`/user/${userId}/setting`);
   };
 
   const handleNewUser = () => {
@@ -84,12 +84,31 @@ const UserListPage = () => {
     return age;
   };
 
+  // Mock function to simulate alert settings - in real app this would come from API
+  const getAlertSettings = (userId: number) => {
+    // This is mock data - replace with actual API call
+    const mockSettings = [
+      { userId: 1, heartRate: true, skinTemp: true },
+      { userId: 2, heartRate: false, skinTemp: true },
+      { userId: 3, heartRate: true, skinTemp: false },
+    ];
+    
+    const userSettings = mockSettings.find(s => s.userId === userId);
+    if (!userSettings) return 'なし';
+    
+    const alerts = [];
+    if (userSettings.heartRate) alerts.push('心拍');
+    if (userSettings.skinTemp) alerts.push('皮膚温');
+    
+    return alerts.length > 0 ? alerts.join('・') : 'なし';
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 mt-4 text-center">ユーザーリストを読み込み中...</p>
+          <p className="text-gray-600 mt-4 text-center">利用者リストを読み込み中...</p>
         </div>
       </div>
     );
@@ -104,17 +123,17 @@ const UserListPage = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold text-white">
-                  ユーザー管理
+                  利用者管理
                 </h1>
                 <p className="text-blue-100 mt-2">
-                  Remony - 登録ユーザー一覧
+                  見守りサービス - 登録利用者一覧
                 </p>
               </div>
               <button
                 onClick={handleNewUser}
                 className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-lg"
               >
-                新規ユーザー追加
+                新しい利用者を登録
               </button>
             </div>
           </div>
@@ -138,7 +157,7 @@ const UserListPage = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ユーザー情報
+                    利用者情報
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     連絡先
@@ -150,7 +169,7 @@ const UserListPage = () => {
                     クライアント・LINE
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    権限
+                    アラート設定
                   </th>
                 </tr>
               </thead>
@@ -201,12 +220,8 @@ const UserListPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.role === 1
-                          ? 'bg-purple-100 text-purple-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {RoleOptions.find(r => r.value === user.role)?.label}
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        {getAlertSettings(user.id)}
                       </span>
                     </td>
                   </tr>
@@ -219,10 +234,10 @@ const UserListPage = () => {
           {filteredUsers.length === 0 && !isLoading && (
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg">
-                {searchTerm ? '検索結果が見つかりませんでした' : 'ユーザーが見つかりませんでした'}
+                {searchTerm ? '検索結果が見つかりませんでした' : '利用者が見つかりませんでした'}
               </div>
               <div className="text-gray-400 text-sm mt-2">
-                {searchTerm ? '検索条件を変更してください' : 'ユーザーを追加してください'}
+                {searchTerm ? '検索条件を変更してください' : '利用者を追加してください'}
               </div>
             </div>
           )}
@@ -232,7 +247,7 @@ const UserListPage = () => {
             <div className="bg-gray-50 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500">
-                  合計 {filteredUsers.length} 件のユーザー ({startIndex + 1} - {Math.min(endIndex, filteredUsers.length)} 件を表示)
+                  合計 {filteredUsers.length} 件の利用者 ({startIndex + 1} - {Math.min(endIndex, filteredUsers.length)} 件を表示)
                 </div>
                 
                 {totalPages > 1 && (
