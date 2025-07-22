@@ -50,7 +50,8 @@ const UserListPage = () => {
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone.includes(searchTerm) ||
-    user.lineid.toLowerCase().includes(searchTerm.toLowerCase())
+    user.line_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.lineid && user.lineid.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Pagination calculations
@@ -84,23 +85,20 @@ const UserListPage = () => {
     return age;
   };
 
-  // Mock function to simulate alert settings - in real app this would come from API
-  const getAlertSettings = (userId: number) => {
-    // This is mock data - replace with actual API call
-    const mockSettings = [
-      { userId: 1, heartRate: true, skinTemp: true },
-      { userId: 2, heartRate: false, skinTemp: true },
-      { userId: 3, heartRate: true, skinTemp: false },
-    ];
-    
-    const userSettings = mockSettings.find(s => s.userId === userId);
-    if (!userSettings) return 'なし';
-    
+  // Updated function to get alert settings from user object
+  const getAlertSettings = (user: User) => {
     const alerts = [];
-    if (userSettings.heartRate) alerts.push('心拍');
-    if (userSettings.skinTemp) alerts.push('皮膚温');
+    if (user.step_alert_enabled) alerts.push('歩数');
+    if (user.distance_alert_enabled) alerts.push('距離');
+    if (user.heart_rate_alert_enabled) alerts.push('心拍数');
+    if (user.sleep_alert_enabled) alerts.push('睡眠');
+    if (user.bmr_cals_alert_enabled) alerts.push('基礎代謝');
+    if (user.act_cals_alert_enabled) alerts.push('活動カロリー');
+    if (user.skin_temp_alert_enabled) alerts.push('皮膚温');
+    if (user.solar_gen_alert_enabled) alerts.push('太陽光発電');
+    if (user.thermal_gen_alert_enabled) alerts.push('熱発電');
     
-    return alerts.length > 0 ? alerts.join('・') : 'なし';
+    return alerts.length > 0 ? alerts.join('、') : 'なし';
   };
 
   if (isLoading) {
@@ -216,12 +214,12 @@ const UserListPage = () => {
                         Client ID: {user.client_id}
                       </div>
                       <div className="text-sm text-gray-500 font-mono">
-                        {user.lineid}
+                        {user.line_id || user.lineid}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                        {getAlertSettings(user.id)}
+                        {getAlertSettings(user)}
                       </span>
                     </td>
                   </tr>

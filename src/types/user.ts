@@ -2,7 +2,8 @@ export interface User {
   id: number;
   name: string; // 日本語名前をサポート
   client_id: number;
-  lineid: string;
+  line_id: string; // Updated API uses line_id
+  lineid?: string; // Keep for backward compatibility
   email: string;
   phone: string;
   gender: number; // 1 = male, 0 = female
@@ -10,12 +11,22 @@ export interface User {
   weight: number;
   height: number;
   address: string; // 住所を追加
+  // Alert settings from updated API
+  heart_rate_alert_enabled?: number;
+  skin_temp_alert_enabled?: number;
+  step_alert_enabled?: number;
+  distance_alert_enabled?: number;
+  sleep_alert_enabled?: number;
+  bmr_cals_alert_enabled?: number;
+  act_cals_alert_enabled?: number;
+  solar_gen_alert_enabled?: number;
+  thermal_gen_alert_enabled?: number;
 }
 
 export interface UserFormData {
   name: string; // 日本語名前をサポート
   client_id: number;
-  lineid: string;
+  line_id: string; // Updated API uses line_id
   email: string;
   phone: string;
   gender: number;
