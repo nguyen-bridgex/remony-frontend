@@ -7,49 +7,49 @@ import { User } from '../../../types/user';
 
 interface SettingsFormData {
   // Steps
-  step_min: number;
-  step_max: number;
-  step_alert_enable: boolean;
+  step_lower_threshold: number;
+  step_upper_threshold: number;
+  step_alert_enabled: boolean;
   
   // Distance
-  distance_min: number;
-  distance_max: number;
-  distance_alert_enable: boolean;
+  distance_lower_threshold: number;
+  distance_upper_threshold: number;
+  distance_alert_enabled: boolean;
   
   // Heart Rate
-  heart_rate_min: number;
-  heart_rate_max: number;
-  heart_rate_alert_enable: boolean;
+  heart_rate_lower_threshold: number;
+  heart_rate_upper_threshold: number;
+  heart_rate_alert_enabled: boolean;
   
   // Sleep
-  sleep_min: number;
-  sleep_max: number;
-  sleep_alert_enable: boolean;
+  sleep_lower_threshold: number;
+  sleep_upper_threshold: number;
+  sleep_alert_enabled: boolean;
   
   // BMR Calories
-  bmr_cals_min: number;
-  bmr_cals_max: number;
-  bmr_cals_alert_enable: boolean;
+  bmr_cals_lower_threshold: number;
+  bmr_cals_upper_threshold: number;
+  bmr_cals_alert_enabled: boolean;
   
   // Activity Calories
-  act_cals_min: number;
-  act_cals_max: number;
-  act_cals_alert_enable: boolean;
+  act_cals_lower_threshold: number;
+  act_cals_upper_threshold: number;
+  act_cals_alert_enabled: boolean;
   
   // Skin Temperature
-  skin_temp_min: number;
-  skin_temp_max: number;
-  skin_temp_alert_enable: boolean;
+  skin_temp_lower_threshold: number;
+  skin_temp_upper_threshold: number;
+  skin_temp_alert_enabled: boolean;
   
   // Solar Generation
-  solar_gen_min: number;
-  solar_gen_max: number;
-  solar_gen_alert_enable: boolean;
+  solar_gen_lower_threshold: number;
+  solar_gen_upper_threshold: number;
+  solar_gen_alert_enabled: boolean;
   
   // Thermal Generation
-  thermal_gen_min: number;
-  thermal_gen_max: number;
-  thermal_gen_alert_enable: boolean;
+  thermal_gen_lower_threshold: number;
+  thermal_gen_upper_threshold: number;
+  thermal_gen_alert_enabled: boolean;
   
   // Alert message
   alert_message: string;
@@ -60,11 +60,11 @@ interface MetricConfig {
   name: string;
   unit: string;
   color: string;
-  minKey: keyof SettingsFormData;
-  maxKey: keyof SettingsFormData;
+  lowerKey: keyof SettingsFormData;
+  upperKey: keyof SettingsFormData;
   alertKey: keyof SettingsFormData;
-  minPlaceholder: string;
-  maxPlaceholder: string;
+  lowerPlaceholder: string;
+  upperPlaceholder: string;
   stepValue: string;
   minLimit?: number;
   maxLimit?: number;
@@ -72,123 +72,123 @@ interface MetricConfig {
 
 const METRICS_CONFIG: MetricConfig[] = [
   {
-    key: 'step_min',
+    key: 'step_lower_threshold',
     name: '歩数',
     unit: '歩',
     color: 'blue',
-    minKey: 'step_min',
-    maxKey: 'step_max',
-    alertKey: 'step_alert_enable',
-    minPlaceholder: '0',
-    maxPlaceholder: '10000',
+    lowerKey: 'step_lower_threshold',
+    upperKey: 'step_upper_threshold',
+    alertKey: 'step_alert_enabled',
+    lowerPlaceholder: '0',
+    upperPlaceholder: '10000',
     stepValue: '1',
     minLimit: 0,
   },
   {
-    key: 'distance_min',
+    key: 'distance_lower_threshold',
     name: '距離',
     unit: 'km',
     color: 'green',
-    minKey: 'distance_min',
-    maxKey: 'distance_max',
-    alertKey: 'distance_alert_enable',
-    minPlaceholder: '0',
-    maxPlaceholder: '10',
+    lowerKey: 'distance_lower_threshold',
+    upperKey: 'distance_upper_threshold',
+    alertKey: 'distance_alert_enabled',
+    lowerPlaceholder: '0',
+    upperPlaceholder: '10',
     stepValue: '0.1',
     minLimit: 0,
   },
   {
-    key: 'heart_rate_min',
+    key: 'heart_rate_lower_threshold',
     name: '心拍数',
     unit: 'bpm',
     color: 'red',
-    minKey: 'heart_rate_min',
-    maxKey: 'heart_rate_max',
-    alertKey: 'heart_rate_alert_enable',
-    minPlaceholder: '50',
-    maxPlaceholder: '150',
+    lowerKey: 'heart_rate_lower_threshold',
+    upperKey: 'heart_rate_upper_threshold',
+    alertKey: 'heart_rate_alert_enabled',
+    lowerPlaceholder: '50',
+    upperPlaceholder: '150',
     stepValue: '1',
     minLimit: 30,
     maxLimit: 220,
   },
   {
-    key: 'sleep_min',
+    key: 'sleep_lower_threshold',
     name: '睡眠時間',
     unit: '時間',
     color: 'purple',
-    minKey: 'sleep_min',
-    maxKey: 'sleep_max',
-    alertKey: 'sleep_alert_enable',
-    minPlaceholder: '6',
-    maxPlaceholder: '10',
+    lowerKey: 'sleep_lower_threshold',
+    upperKey: 'sleep_upper_threshold',
+    alertKey: 'sleep_alert_enabled',
+    lowerPlaceholder: '6',
+    upperPlaceholder: '10',
     stepValue: '0.5',
     minLimit: 0,
     maxLimit: 24,
   },
   {
-    key: 'bmr_cals_min',
+    key: 'bmr_cals_lower_threshold',
     name: '基礎代謝カロリー',
     unit: 'kcal',
     color: 'orange',
-    minKey: 'bmr_cals_min',
-    maxKey: 'bmr_cals_max',
-    alertKey: 'bmr_cals_alert_enable',
-    minPlaceholder: '1200',
-    maxPlaceholder: '2500',
+    lowerKey: 'bmr_cals_lower_threshold',
+    upperKey: 'bmr_cals_upper_threshold',
+    alertKey: 'bmr_cals_alert_enabled',
+    lowerPlaceholder: '1200',
+    upperPlaceholder: '2500',
     stepValue: '10',
     minLimit: 500,
   },
   {
-    key: 'act_cals_min',
+    key: 'act_cals_lower_threshold',
     name: '活動カロリー',
     unit: 'kcal',
     color: 'yellow',
-    minKey: 'act_cals_min',
-    maxKey: 'act_cals_max',
-    alertKey: 'act_cals_alert_enable',
-    minPlaceholder: '200',
-    maxPlaceholder: '1000',
+    lowerKey: 'act_cals_lower_threshold',
+    upperKey: 'act_cals_upper_threshold',
+    alertKey: 'act_cals_alert_enabled',
+    lowerPlaceholder: '200',
+    upperPlaceholder: '1000',
     stepValue: '10',
     minLimit: 0,
   },
   {
-    key: 'skin_temp_min',
+    key: 'skin_temp_lower_threshold',
     name: '皮膚温',
     unit: '℃',
     color: 'pink',
-    minKey: 'skin_temp_min',
-    maxKey: 'skin_temp_max',
-    alertKey: 'skin_temp_alert_enable',
-    minPlaceholder: '35.0',
-    maxPlaceholder: '38.5',
+    lowerKey: 'skin_temp_lower_threshold',
+    upperKey: 'skin_temp_upper_threshold',
+    alertKey: 'skin_temp_alert_enabled',
+    lowerPlaceholder: '35.0',
+    upperPlaceholder: '38.5',
     stepValue: '0.1',
     minLimit: 30,
     maxLimit: 45,
   },
   {
-    key: 'solar_gen_min',
+    key: 'solar_gen_lower_threshold',
     name: '太陽光発電',
     unit: '%',
     color: 'cyan',
-    minKey: 'solar_gen_min',
-    maxKey: 'solar_gen_max',
-    alertKey: 'solar_gen_alert_enable',
-    minPlaceholder: '0',
-    maxPlaceholder: '100',
+    lowerKey: 'solar_gen_lower_threshold',
+    upperKey: 'solar_gen_upper_threshold',
+    alertKey: 'solar_gen_alert_enabled',
+    lowerPlaceholder: '0',
+    upperPlaceholder: '100',
     stepValue: '1',
     minLimit: 0,
     maxLimit: 100,
   },
   {
-    key: 'thermal_gen_min',
+    key: 'thermal_gen_lower_threshold',
     name: '熱発電',
     unit: '%',
     color: 'indigo',
-    minKey: 'thermal_gen_min',
-    maxKey: 'thermal_gen_max',
-    alertKey: 'thermal_gen_alert_enable',
-    minPlaceholder: '0',
-    maxPlaceholder: '100',
+    lowerKey: 'thermal_gen_lower_threshold',
+    upperKey: 'thermal_gen_upper_threshold',
+    alertKey: 'thermal_gen_alert_enabled',
+    lowerPlaceholder: '0',
+    upperPlaceholder: '100',
     stepValue: '1',
     minLimit: 0,
     maxLimit: 100,
@@ -217,33 +217,33 @@ const AlertSettingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [formData, setFormData] = useState<SettingsFormData>({
-    step_min: 0,
-    step_max: 10000,
-    step_alert_enable: false,
-    distance_min: 0,
-    distance_max: 10,
-    distance_alert_enable: false,
-    heart_rate_min: 50,
-    heart_rate_max: 150,
-    heart_rate_alert_enable: true,
-    sleep_min: 6,
-    sleep_max: 10,
-    sleep_alert_enable: false,
-    bmr_cals_min: 1200,
-    bmr_cals_max: 2500,
-    bmr_cals_alert_enable: false,
-    act_cals_min: 200,
-    act_cals_max: 1000,
-    act_cals_alert_enable: false,
-    skin_temp_min: 35.0,
-    skin_temp_max: 38.5,
-    skin_temp_alert_enable: true,
-    solar_gen_min: 0,
-    solar_gen_max: 100,
-    solar_gen_alert_enable: false,
-    thermal_gen_min: 0,
-    thermal_gen_max: 100,
-    thermal_gen_alert_enable: false,
+    step_lower_threshold: 0,
+    step_upper_threshold: 10000,
+    step_alert_enabled: false,
+    distance_lower_threshold: 0,
+    distance_upper_threshold: 10,
+    distance_alert_enabled: false,
+    heart_rate_lower_threshold: 50,
+    heart_rate_upper_threshold: 150,
+    heart_rate_alert_enabled: true,
+    sleep_lower_threshold: 6,
+    sleep_upper_threshold: 10,
+    sleep_alert_enabled: false,
+    bmr_cals_lower_threshold: 1200,
+    bmr_cals_upper_threshold: 2500,
+    bmr_cals_alert_enabled: false,
+    act_cals_lower_threshold: 200,
+    act_cals_upper_threshold: 1000,
+    act_cals_alert_enabled: false,
+    skin_temp_lower_threshold: 35.0,
+    skin_temp_upper_threshold: 38.5,
+    skin_temp_alert_enabled: true,
+    solar_gen_lower_threshold: 0,
+    solar_gen_upper_threshold: 100,
+    solar_gen_alert_enabled: false,
+    thermal_gen_lower_threshold: 0,
+    thermal_gen_upper_threshold: 100,
+    thermal_gen_alert_enabled: false,
     alert_message: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -328,23 +328,23 @@ const AlertSettingsPage = () => {
     const newErrors: Record<string, string> = {};
     
     METRICS_CONFIG.forEach(metric => {
-      const minValue = formData[metric.minKey] as number;
-      const maxValue = formData[metric.maxKey] as number;
+      const minValue = formData[metric.lowerKey] as number;
+      const maxValue = formData[metric.upperKey] as number;
       
       if (minValue < 0) {
-        newErrors[metric.minKey] = `${metric.name}の最小値は0以上である必要があります`;
+        newErrors[metric.lowerKey] = `${metric.name}の最小値は0以上である必要があります`;
       }
       
       if (metric.minLimit !== undefined && minValue < metric.minLimit) {
-        newErrors[metric.minKey] = `${metric.name}の最小値は${metric.minLimit}以上である必要があります`;
+        newErrors[metric.lowerKey] = `${metric.name}の最小値は${metric.minLimit}以上である必要があります`;
       }
       
       if (metric.maxLimit !== undefined && maxValue > metric.maxLimit) {
-        newErrors[metric.maxKey] = `${metric.name}の最大値は${metric.maxLimit}以下である必要があります`;
+        newErrors[metric.upperKey] = `${metric.name}の最大値は${metric.maxLimit}以下である必要があります`;
       }
       
       if (minValue >= maxValue) {
-        newErrors[metric.minKey] = `${metric.name}の最小値は最大値より小さい必要があります`;
+        newErrors[metric.lowerKey] = `${metric.name}の最小値は最大値より小さい必要があります`;
       }
     });
 
@@ -510,42 +510,42 @@ const AlertSettingsPage = () => {
 
                               {/* Min Value */}
                               <div>
-                                <label htmlFor={metric.minKey} className="block text-sm font-medium text-gray-700 mb-2">
+                                <label htmlFor={metric.lowerKey} className="block text-sm font-medium text-gray-700 mb-2">
                                   最小値 ({metric.unit})
                                 </label>
                                 <input
                                   type="number"
-                                  id={metric.minKey}
-                                  name={metric.minKey}
-                                  value={formData[metric.minKey] as number}
+                                  id={metric.lowerKey}
+                                  name={metric.lowerKey}
+                                  value={formData[metric.lowerKey] as number}
                                   onChange={handleInputChange}
                                   min={metric.minLimit}
                                   max={metric.maxLimit}
                                   step={metric.stepValue}
                                   className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 ${colorClass.ring} focus:border-transparent transition-all duration-200`}
-                                  placeholder={metric.minPlaceholder}
+                                  placeholder={metric.lowerPlaceholder}
                                 />
-                                {errors[metric.minKey] && <p className="text-red-500 text-sm mt-1">{errors[metric.minKey]}</p>}
+                                {errors[metric.lowerKey] && <p className="text-red-500 text-sm mt-1">{errors[metric.lowerKey]}</p>}
                               </div>
 
                               {/* Max Value */}
                               <div>
-                                <label htmlFor={metric.maxKey} className="block text-sm font-medium text-gray-700 mb-2">
+                                <label htmlFor={metric.upperKey} className="block text-sm font-medium text-gray-700 mb-2">
                                   最大値 ({metric.unit})
                                 </label>
                                 <input
                                   type="number"
-                                  id={metric.maxKey}
-                                  name={metric.maxKey}
-                                  value={formData[metric.maxKey] as number}
+                                  id={metric.upperKey}
+                                  name={metric.upperKey}
+                                  value={formData[metric.upperKey] as number}
                                   onChange={handleInputChange}
                                   min={metric.minLimit}
                                   max={metric.maxLimit}
                                   step={metric.stepValue}
                                   className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 ${colorClass.ring} focus:border-transparent transition-all duration-200`}
-                                  placeholder={metric.maxPlaceholder}
+                                  placeholder={metric.upperPlaceholder}
                                 />
-                                {errors[metric.maxKey] && <p className="text-red-500 text-sm mt-1">{errors[metric.maxKey]}</p>}
+                                {errors[metric.upperKey] && <p className="text-red-500 text-sm mt-1">{errors[metric.upperKey]}</p>}
                               </div>
                             </div>
                           </div>
@@ -554,7 +554,7 @@ const AlertSettingsPage = () => {
                     </div>
 
                     {/* Alert Message Section */}
-                    <div className="bg-gray-50 p-6 rounded-xl">
+                    {/* <div className="bg-gray-50 p-6 rounded-xl">
                       <h2 className="text-2xl font-bold text-gray-800 mb-6">アラートメッセージ設定</h2>
                       <div className="space-y-6">
                         <div>
@@ -573,7 +573,7 @@ const AlertSettingsPage = () => {
                           {errors.alert_message && <p className="text-red-500 text-sm mt-1">{errors.alert_message}</p>}
                         </div>
                       </div>
-                    </div>
+                    </div> */}
 
                     {/* Action Buttons */}
                     <div className="flex space-x-4 pt-4">
@@ -616,7 +616,7 @@ const AlertSettingsPage = () => {
                               <div className="bg-white p-3 rounded-lg">
                                 <h3 className="text-sm font-medium text-gray-600 mb-1">範囲設定</h3>
                                 <p className={`text-base font-bold ${colorClass.button}`}>
-                                  {formData[metric.minKey]} - {formData[metric.maxKey]} {metric.unit}
+                                  {formData[metric.lowerKey]} - {formData[metric.upperKey]} {metric.unit}
                                 </p>
                               </div>
                             </div>
@@ -626,7 +626,7 @@ const AlertSettingsPage = () => {
                     </div>
                     
                     {/* Alert Message Display */}
-                    <div className="bg-gray-50 p-6 rounded-xl">
+                    {/* <div className="bg-gray-50 p-6 rounded-xl">
                       <h2 className="text-2xl font-bold text-gray-800 mb-6">アラートメッセージ設定</h2>
                       <div className="bg-white p-4 rounded-lg">
                         <h3 className="text-sm font-medium text-gray-600 mb-2">アラートメッセージ</h3>
@@ -634,7 +634,7 @@ const AlertSettingsPage = () => {
                           {settings?.alert_message || 'メッセージが設定されていません'}
                         </p>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                 )}
               </>

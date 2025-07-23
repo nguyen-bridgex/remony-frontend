@@ -6,15 +6,15 @@ const nextConfig = {
     return [
       {
         source: '/api/updateSettings/:path*',
-        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/update-settings/:path*`,
       },
       {
         source: '/api/getSettings/:path*',
-        destination: `${process.env.NEXT_PUBLIC_GETSETTINGS_API_URL || 'http://localhost:3000'}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/get-settings/:path*`,
       },
       {
         source: '/api/getUsers/:path*',
-        destination: `${process.env.NEXT_PUBLIC_GETUSERS_API_URL || 'http://localhost:3000'}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/get-userlist/:path*`,
       },
     ];
   },

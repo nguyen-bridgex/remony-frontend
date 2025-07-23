@@ -1,48 +1,48 @@
 export interface UpdateSettingsRequest {
   // Steps
-  step_min: number;
-  step_max: number;
-  step_alert_enable: boolean;
+  step_lower_threshold: number;
+  step_upper_threshold: number;
+  step_alert_enabled: boolean;
   
   // Distance
-  distance_min: number;
-  distance_max: number;
-  distance_alert_enable: boolean;
+  distance_lower_threshold: number;
+  distance_upper_threshold: number;
+  distance_alert_enabled: boolean;
   
   // Heart Rate
-  heart_rate_min: number;
-  heart_rate_max: number;
-  heart_rate_alert_enable: boolean;
+  heart_rate_lower_threshold: number;
+  heart_rate_upper_threshold: number;
+  heart_rate_alert_enabled: boolean;
   
   // Sleep
-  sleep_min: number;
-  sleep_max: number;
-  sleep_alert_enable: boolean;
+  sleep_lower_threshold: number;
+  sleep_upper_threshold: number;
+  sleep_alert_enabled: boolean;
   
   // BMR Calories
-  bmr_cals_min: number;
-  bmr_cals_max: number;
-  bmr_cals_alert_enable: boolean;
+  bmr_cals_lower_threshold: number;
+  bmr_cals_upper_threshold: number;
+  bmr_cals_alert_enabled: boolean;
   
   // Activity Calories
-  act_cals_min: number;
-  act_cals_max: number;
-  act_cals_alert_enable: boolean;
+  act_cals_lower_threshold: number;
+  act_cals_upper_threshold: number;
+  act_cals_alert_enabled: boolean;
   
   // Skin Temperature
-  skin_temp_min: number;
-  skin_temp_max: number;
-  skin_temp_alert_enable: boolean;
+  skin_temp_lower_threshold: number;
+  skin_temp_upper_threshold: number;
+  skin_temp_alert_enabled: boolean;
   
   // Solar Generation
-  solar_gen_min: number;
-  solar_gen_max: number;
-  solar_gen_alert_enable: boolean;
+  solar_gen_lower_threshold: number;
+  solar_gen_upper_threshold: number;
+  solar_gen_alert_enabled: boolean;
   
   // Thermal Generation
-  thermal_gen_min: number;
-  thermal_gen_max: number;
-  thermal_gen_alert_enable: boolean;
+  thermal_gen_lower_threshold: number;
+  thermal_gen_upper_threshold: number;
+  thermal_gen_alert_enabled: boolean;
   
   // Alert message
   alert_message: string;
@@ -65,7 +65,7 @@ export const updateUserSettings = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userId,
+        userId: userId.toString().padStart(6, '0'), // Convert to string format like "000001"
         ...settings
     }),
     });
@@ -109,49 +109,49 @@ export const getUserSettings = async (
       message: 'Settings fetched successfully',
       data: {
         // Steps
-        step_min: result.settings.step_min || 0,
-        step_max: result.settings.step_max || 10000,
-        step_alert_enable: result.settings.step_alert_enable || false,
+        step_lower_threshold: result.settings.step_lower_threshold || 0,
+        step_upper_threshold: result.settings.step_upper_threshold || 10000,
+        step_alert_enabled: result.settings.step_alert_enabled || false,
         
         // Distance
-        distance_min: result.settings.distance_min || 0,
-        distance_max: result.settings.distance_max || 10,
-        distance_alert_enable: result.settings.distance_alert_enable || false,
+        distance_lower_threshold: result.settings.distance_lower_threshold || 0,
+        distance_upper_threshold: result.settings.distance_upper_threshold || 10,
+        distance_alert_enabled: result.settings.distance_alert_enabled || false,
         
         // Heart Rate
-        heart_rate_min: result.settings.heart_rate_min || 50,
-        heart_rate_max: result.settings.heart_rate_max || 150,
-        heart_rate_alert_enable: result.settings.heart_rate_alert_enable || true,
+        heart_rate_lower_threshold: result.settings.heart_rate_lower_threshold || 50,
+        heart_rate_upper_threshold: result.settings.heart_rate_upper_threshold || 150,
+        heart_rate_alert_enabled: result.settings.heart_rate_alert_enabled || true,
         
         // Sleep
-        sleep_min: result.settings.sleep_min || 6,
-        sleep_max: result.settings.sleep_max || 10,
-        sleep_alert_enable: result.settings.sleep_alert_enable || false,
+        sleep_lower_threshold: result.settings.sleep_lower_threshold || 6,
+        sleep_upper_threshold: result.settings.sleep_upper_threshold || 10,
+        sleep_alert_enabled: result.settings.sleep_alert_enabled || false,
         
         // BMR Calories
-        bmr_cals_min: result.settings.bmr_cals_min || 1200,
-        bmr_cals_max: result.settings.bmr_cals_max || 2500,
-        bmr_cals_alert_enable: result.settings.bmr_cals_alert_enable || false,
+        bmr_cals_lower_threshold: result.settings.bmr_cals_lower_threshold || 1200,
+        bmr_cals_upper_threshold: result.settings.bmr_cals_upper_threshold || 2500,
+        bmr_cals_alert_enabled: result.settings.bmr_cals_alert_enabled || false,
         
         // Activity Calories
-        act_cals_min: result.settings.act_cals_min || 200,
-        act_cals_max: result.settings.act_cals_max || 1000,
-        act_cals_alert_enable: result.settings.act_cals_alert_enable || false,
+        act_cals_lower_threshold: result.settings.act_cals_lower_threshold || 200,
+        act_cals_upper_threshold: result.settings.act_cals_upper_threshold || 1000,
+        act_cals_alert_enabled: result.settings.act_cals_alert_enabled || false,
         
         // Skin Temperature
-        skin_temp_min: result.settings.skin_temp_min || 35.0,
-        skin_temp_max: result.settings.skin_temp_max || 38.5,
-        skin_temp_alert_enable: result.settings.skin_temp_alert_enable || true,
+        skin_temp_lower_threshold: result.settings.skin_temp_lower_threshold || 35.0,
+        skin_temp_upper_threshold: result.settings.skin_temp_upper_threshold || 38.5,
+        skin_temp_alert_enabled: result.settings.skin_temp_alert_enabled || true,
         
         // Solar Generation
-        solar_gen_min: result.settings.solar_gen_min || 0,
-        solar_gen_max: result.settings.solar_gen_max || 100,
-        solar_gen_alert_enable: result.settings.solar_gen_alert_enable || false,
+        solar_gen_lower_threshold: result.settings.solar_gen_lower_threshold || 0,
+        solar_gen_upper_threshold: result.settings.solar_gen_upper_threshold || 100,
+        solar_gen_alert_enabled: result.settings.solar_gen_alert_enabled || false,
         
         // Thermal Generation
-        thermal_gen_min: result.settings.thermal_gen_min || 0,
-        thermal_gen_max: result.settings.thermal_gen_max || 100,
-        thermal_gen_alert_enable: result.settings.thermal_gen_alert_enable || false,
+        thermal_gen_lower_threshold: result.settings.thermal_gen_lower_threshold || 0,
+        thermal_gen_upper_threshold: result.settings.thermal_gen_upper_threshold || 100,
+        thermal_gen_alert_enabled: result.settings.thermal_gen_alert_enabled || false,
         
         // Alert message
         alert_message: result.settings.alert_message || '',
@@ -164,33 +164,33 @@ export const getUserSettings = async (
       message: error instanceof Error ? error.message : 'An error occurred while getting settings',
       data: {
         // Default values when error occurs
-        step_min: 0,
-        step_max: 10000,
-        step_alert_enable: false,
-        distance_min: 0,
-        distance_max: 10,
-        distance_alert_enable: false,
-        heart_rate_min: 50,
-        heart_rate_max: 150,
-        heart_rate_alert_enable: true,
-        sleep_min: 6,
-        sleep_max: 10,
-        sleep_alert_enable: false,
-        bmr_cals_min: 1200,
-        bmr_cals_max: 2500,
-        bmr_cals_alert_enable: false,
-        act_cals_min: 200,
-        act_cals_max: 1000,
-        act_cals_alert_enable: false,
-        skin_temp_min: 35.0,
-        skin_temp_max: 38.5,
-        skin_temp_alert_enable: true,
-        solar_gen_min: 0,
-        solar_gen_max: 100,
-        solar_gen_alert_enable: false,
-        thermal_gen_min: 0,
-        thermal_gen_max: 100,
-        thermal_gen_alert_enable: false,
+        step_lower_threshold: 0,
+        step_upper_threshold: 10000,
+        step_alert_enabled: false,
+        distance_lower_threshold: 0,
+        distance_upper_threshold: 10,
+        distance_alert_enabled: false,
+        heart_rate_lower_threshold: 50,
+        heart_rate_upper_threshold: 150,
+        heart_rate_alert_enabled: true,
+        sleep_lower_threshold: 6,
+        sleep_upper_threshold: 10,
+        sleep_alert_enabled: false,
+        bmr_cals_lower_threshold: 1200,
+        bmr_cals_upper_threshold: 2500,
+        bmr_cals_alert_enabled: false,
+        act_cals_lower_threshold: 200,
+        act_cals_upper_threshold: 1000,
+        act_cals_alert_enabled: false,
+        skin_temp_lower_threshold: 35.0,
+        skin_temp_upper_threshold: 38.5,
+        skin_temp_alert_enabled: true,
+        solar_gen_lower_threshold: 0,
+        solar_gen_upper_threshold: 100,
+        solar_gen_alert_enabled: false,
+        thermal_gen_lower_threshold: 0,
+        thermal_gen_upper_threshold: 100,
+        thermal_gen_alert_enabled: false,
         alert_message: '',
       },
     };
