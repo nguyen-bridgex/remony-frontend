@@ -7,7 +7,7 @@ const UserRegister = () => {
   const [formData, setFormData] = useState<UserFormData>({
     name: '',
     client_id: 0,
-    lineid: '',
+    line_id: '',
     email: '',
     phone: '',
     gender: 1,
@@ -40,7 +40,7 @@ const UserRegister = () => {
     const newErrors: Record<string, string> = {};
     
     if (formData.client_id <= 0) newErrors.client_id = 'クライアントIDは必須です';
-    if (!formData.lineid.trim()) newErrors.lineid = 'LINE IDは必須です';
+    if (!formData.line_id.trim()) newErrors.line_id = 'LINE IDは必須です';
     if (!formData.name.trim()) newErrors.name = '名前は必須です';
     if (!formData.email.trim()) newErrors.email = 'メールアドレスは必須です';
     if (!formData.phone.trim()) newErrors.phone = '電話番号は必須です';
@@ -101,19 +101,19 @@ const UserRegister = () => {
 
             {/* LINE ID */}
             <div>
-              <label htmlFor="lineid" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="line_id" className="block text-sm font-medium text-gray-700 mb-2">
                 LINE ID
               </label>
               <input
                 type="text"
-                id="lineid"
-                name="lineid"
-                value={formData.lineid}
+                id="line_id"
+                name="line_id"
+                value={formData.line_id}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="LINE IDを入力してください"
               />
-              {errors.lineid && <p className="text-red-500 text-sm mt-1">{errors.lineid}</p>}
+              {errors.line_id && <p className="text-red-500 text-sm mt-1">{errors.line_id}</p>}
             </div>
 
             {/* Name */}

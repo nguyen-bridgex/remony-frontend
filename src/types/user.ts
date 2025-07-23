@@ -3,7 +3,6 @@ export interface User {
   name: string; // 日本語名前をサポート
   client_id: number;
   line_id: string; // Updated API uses line_id
-  lineid?: string; // Keep for backward compatibility
   email: string;
   phone: string;
   gender: number; // 1 = male, 0 = female

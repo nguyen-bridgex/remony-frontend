@@ -51,7 +51,7 @@ const UserListPage = () => {
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.phone.includes(searchTerm) ||
     user.line_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.lineid && user.lineid.toLowerCase().includes(searchTerm.toLowerCase()))
+    (user.line_id && user.line_id.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   // Pagination calculations
@@ -214,7 +214,7 @@ const UserListPage = () => {
                         Client ID: {user.client_id}
                       </div>
                       <div className="text-sm text-gray-500 font-mono">
-                        {user.line_id || user.lineid}
+                        {user.line_id || user.line_id}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
