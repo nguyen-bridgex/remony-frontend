@@ -210,6 +210,7 @@ const COLOR_CLASSES = {
 const AlertSettingsPage = () => {
   const router = useRouter();
   const { id } = router.query;
+  console.log({id});
   const [selectedUserId, setSelectedUserId] = useState<number>(0);
   const [users, setUsers] = useState<User[]>([]);
   const [settings, setSettings] = useState<SettingsFormData | null>(null);
@@ -257,13 +258,7 @@ const AlertSettingsPage = () => {
         const result = await getUsers();
         if (result.success && result.data) {
           setUsers(result.data);
-          // If URL has id, set it as selected user
-          if (id && !isNaN(parseInt(id as string))) {
-            setSelectedUserId(parseInt(id as string));
-          } else if (result.data.length > 0) {
-            // Default to first user if no id in URL
-            setSelectedUserId(result.data[0].id);
-          }
+          setSelectedUserId(id ? parseInt(id as string) : 0);
         } else {
           console.error('Failed to fetch users:', result.message);
           toast.error(`利用者の取得に失敗しました: ${result.message}`);
@@ -278,6 +273,8 @@ const AlertSettingsPage = () => {
 
     fetchUsers();
   }, [id]);
+
+  console.log({selectedUserId});
 
   // Fetch user settings when selected user changes
   useEffect(() => {
@@ -360,7 +357,7 @@ const AlertSettingsPage = () => {
     try {
       const result = await updateUserSettings(selectedUserId, formData);
       
-      if (result.success) {
+      if (result.success || (result.message && result.message.toLowerCase().includes('updated'))) {
         toast.success('設定を更新しました！');
         setIsEditing(false);
         setSettings(formData);
@@ -450,9 +447,9 @@ const AlertSettingsPage = () => {
                 onChange={handleUserChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               >
-                <option value={0}>利用者を選択してください</option>
+                <option value="0">利用者を選択してください</option>
                 {users.map((user) => (
-                  <option key={user.id} value={user.id}>
+                  <option key={user.id} value={parseInt(user.id + "")}>
                     {user.name} (ID: {user.id})
                   </option>
                 ))}
@@ -481,7 +478,17 @@ const AlertSettingsPage = () => {
               <>
                 {isEditing ? (
                   /* Edit Form */
-                  <form onSubmit={handleSubmit} className="space-y-8">
+                  <form onSubmit={handleSubmit} className="space-y-8 relative">
+                    
+                    {/* Loading Overlay */}
+                    {isSubmitting && (
+                      <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50 rounded-xl">
+                        <div className="flex flex-col items-center">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                          <p className="text-gray-600 mt-4 font-medium">設定を保存中...</p>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Metrics Grid */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

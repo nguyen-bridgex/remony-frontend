@@ -218,7 +218,7 @@ const UserListPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      <span className="inline-flex px-4 py-2 text-xs font-semibold rounded-full bg-green-100 text-green-800 border-2 border-green-200">
                         {getAlertSettings(user)}
                       </span>
                     </td>
