@@ -423,7 +423,7 @@ const AlertSettingsPage = () => {
                 >
                   利用者一覧
                 </button>
-                {!isEditing && settings && (
+                {!isEditing && (
                   <button
                     onClick={handleEdit}
                     className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-400 transition-colors"

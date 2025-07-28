@@ -39,7 +39,7 @@ const UserListPage = () => {
   }, []);
 
   const handleUserClick = (userId: number) => {
-    router.push(`/user/${userId}/setting`);
+    router.push(`/user/${userId}`);
   };
 
   const handleNewUser = () => {

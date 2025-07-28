@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions } from '../../types/user';
+import toast from 'react-hot-toast';
+import { User, UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions } from '../../types/user';
+import { registUser } from '../../api/users';
 
 const UserRegister = () => {
   const router = useRouter();
@@ -15,11 +17,15 @@ const UserRegister = () => {
     weight: 0,
     height: 0,
     address: '',
+    gateway_id: '',
+    uid: '',
+    device_id: '',
     vital_device: 'remony',
     notification_target: 'line'
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -57,13 +63,60 @@ const UserRegister = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      // Here you would typically send the data to your backend
-      console.log('Form submitted:', formData);
-      alert('利用者登録が完了しました！');
-      router.push('/users');
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Convert UserFormData to User format expected by API
+      const userData: User = {
+        id: 0, // Will be assigned by backend
+        name: formData.name,
+        client_id: formData.client_id,
+        line_id: formData.line_id,
+        email: formData.email,
+        phone: formData.phone,
+        gender: formData.gender,
+        birthday: formData.birthday,
+        weight: formData.weight,
+        height: formData.height,
+        address: formData.address,
+        gateway_id: formData.gateway_id || undefined,
+        uid: formData.uid || undefined,
+        device_id: formData.device_id || undefined
+      };
+
+      const response = await registUser(userData);
+
+      if (response.success) {
+        toast.success('利用者登録が完了しました！', {
+          duration: 4000,
+          position: 'top-center',
+        });
+        
+        // Redirect to users page after showing success message
+        setTimeout(() => {
+          router.push('/users');
+        }, 2000);
+      } else {
+        toast.error(response.message || '登録に失敗しました。もう一度お試しください。', {
+          duration: 4000,
+          position: 'top-center',
+        });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('登録中にエラーが発生しました。もう一度お試しください。', {
+        duration: 4000,
+        position: 'top-center',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -182,6 +235,54 @@ const UserRegister = () => {
                 placeholder="住所を入力してください"
               />
               {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+            </div>
+
+            {/* Device Information */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label htmlFor="gateway_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  ゲートウェイID（任意）
+                </label>
+                <input
+                  type="text"
+                  id="gateway_id"
+                  name="gateway_id"
+                  value={formData.gateway_id}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  placeholder="ゲートウェイIDを入力"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="uid" className="block text-sm font-medium text-gray-700 mb-2">
+                  UID（任意）
+                </label>
+                <input
+                  type="text"
+                  id="uid"
+                  name="uid"
+                  value={formData.uid}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  placeholder="UIDを入力"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="device_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  デバイスID（任意）
+                </label>
+                <input
+                  type="text"
+                  id="device_id"
+                  name="device_id"
+                  value={formData.device_id}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  placeholder="デバイスIDを入力"
+                />
+              </div>
             </div>
 
             {/* Gender */}
@@ -304,9 +405,21 @@ const UserRegister = () => {
             <div className="pt-4">
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-105"
+                disabled={isSubmitting}
+                className={`w-full py-3 px-6 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform transition-all duration-200 ${
+                  isSubmitting
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:scale-105'
+                }`}
               >
-                利用者登録
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    登録中...
+                  </div>
+                ) : (
+                  '利用者登録'
+                )}
               </button>
             </div>
           </form>

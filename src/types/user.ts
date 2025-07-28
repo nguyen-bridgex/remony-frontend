@@ -10,6 +10,9 @@ export interface User {
   weight: number;
   height: number;
   address: string; // 住所を追加
+  gateway_id?: string; // ゲートウェイID
+  uid?: string; // UID
+  device_id?: string; // デバイスID
   // Alert settings from updated API
   heart_rate_alert_enabled?: number;
   skin_temp_alert_enabled?: number;
@@ -33,6 +36,9 @@ export interface UserFormData {
   weight: number;
   height: number;
   address: string; // 住所を追加
+  gateway_id: string; // ゲートウェイID
+  uid: string; // UID
+  device_id: string; // デバイスID
   vital_device: string; // バイタル機器を追加
   notification_target: string; // 通知先を追加
 }
