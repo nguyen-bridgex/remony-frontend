@@ -12,6 +12,30 @@ const UserListPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
+  
+  // Function to get wearing status
+  const getWearingStatus = (isWearing: number | undefined) => {
+    if (isWearing === 1) {
+      return {
+        text: '装着中',
+        className: 'bg-green-100 text-green-800 border-green-300',
+        icon: '✓'
+      };
+    } else if (isWearing === 0) {
+      return {
+        text: '未装着',
+        className: 'bg-red-100 text-red-800 border-red-300',
+        icon: '✗'
+      };
+    } else {
+      return {
+        text: '不明',
+        className: 'bg-gray-100 text-gray-800 border-gray-300',
+        icon: '?'
+      };
+    }
+  };
+
   // Fetch users data from API
   useEffect(() => {
     const fetchUsers = async () => {
@@ -46,13 +70,17 @@ const UserListPage = () => {
     router.push('/user/register');
   };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.phone.includes(searchTerm) ||
-    user.line_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.line_id && user.line_id.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredUsers = users.filter(user => {
+    const wearingStatusText = getWearingStatus(user.is_wearing).text;
+    return (
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phone.includes(searchTerm) ||
+      user.line_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.line_id && user.line_id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      wearingStatusText.includes(searchTerm)
+    );
+  });
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -141,7 +169,7 @@ const UserListPage = () => {
             <div className="max-w-md">
               <input
                 type="text"
-                placeholder="名前、メールアドレス、電話番号、LINE IDで検索..."
+                placeholder="名前、メールアドレス、電話番号、LINE ID、装着状況で検索..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -154,6 +182,9 @@ const UserListPage = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-r-2 border-blue-200">
+                    装着状況
+                  </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     利用者情報
                   </th>
@@ -172,12 +203,22 @@ const UserListPage = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedUsers.map((user) => (
+                {paginatedUsers.map((user) => {
+                  const wearingStatus = getWearingStatus(user.is_wearing);
+                  return (
                   <tr
                     key={user.id}
                     onClick={() => handleUserClick(user.id)}
                     className="hover:bg-blue-50 cursor-pointer transition-colors duration-200"
                   >
+                    <td className="px-6 py-4 whitespace-nowrap bg-blue-50 border-r-2 border-blue-200">
+                      <div className="flex items-center justify-center">
+                        <span className={`inline-flex items-center px-4 py-3 text-sm font-bold rounded-full border-2 ${wearingStatus.className} min-w-[100px] justify-center shadow-sm`}>
+                          <span className="text-lg mr-2">{wearingStatus.icon}</span>
+                          {wearingStatus.text}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-12">
@@ -223,7 +264,8 @@ const UserListPage = () => {
                       </span>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -13,6 +13,7 @@ export interface User {
   gateway_id?: string; // ゲートウェイID
   uid?: string; // UID
   device_id?: string; // デバイスID
+  is_wearing?: number; // 装着状況 - 1 = wearing, 0 = not wearing
   // Alert settings from updated API
   heart_rate_alert_enabled?: number;
   skin_temp_alert_enabled?: number;
