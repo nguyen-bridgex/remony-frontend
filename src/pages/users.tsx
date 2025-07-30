@@ -4,6 +4,14 @@ import toast from 'react-hot-toast';
 import { User, GenderOptions } from '../types/user';
 import { getUsers } from '../api/users';
 
+type SortField = 'name' | 'id' | 'client_id' | 'email' | 'phone' | 'birthday' | 'weight' | 'height' | 'is_wearing';
+type SortDirection = 'asc' | 'desc';
+
+interface SortConfig {
+  field: SortField;
+  direction: SortDirection;
+}
+
 const UserListPage = () => {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
@@ -11,6 +19,10 @@ const UserListPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [sortConfig, setSortConfig] = useState<SortConfig>({
+    field: 'id',
+    direction: 'asc'
+  });
 
   
   // Function to get wearing status
@@ -34,6 +46,77 @@ const UserListPage = () => {
         icon: '?'
       };
     }
+  };
+
+  // Sorting functions
+  const handleSort = (field: SortField) => {
+    const newDirection = sortConfig.field === field && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    setSortConfig({
+      field,
+      direction: newDirection
+    });
+    setCurrentPage(1); // Reset to first page when sorting
+    
+    // Show toast notification
+    const fieldLabel = getSortFieldLabel(field);
+    const directionLabel = newDirection === 'asc' ? '昇順' : '降順';
+    toast.success(`${fieldLabel}で${directionLabel}にソートしました`, {
+      duration: 2000,
+      position: 'top-center',
+    });
+  };
+
+  const sortUsers = (usersToSort: User[]) => {
+    return [...usersToSort].sort((a, b) => {
+      let aValue: any = a[sortConfig.field];
+      let bValue: any = b[sortConfig.field];
+
+      // Handle special cases
+      if (sortConfig.field === 'birthday') {
+        aValue = new Date(aValue).getTime();
+        bValue = new Date(bValue).getTime();
+      } else if (sortConfig.field === 'is_wearing') {
+        // Sort wearing status: wearing (1) first, then not wearing (0), then unknown (undefined)
+        aValue = aValue === 1 ? 3 : aValue === 0 ? 2 : 1;
+        bValue = bValue === 1 ? 3 : bValue === 0 ? 2 : 1;
+      }
+
+      // Handle string comparison
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortConfig.field !== field) {
+      return '↕️';
+    }
+    return sortConfig.direction === 'asc' ? '↑' : '↓';
+  };
+
+  const getSortFieldLabel = (field: SortField) => {
+    const labels: Record<SortField, string> = {
+      name: '名前',
+      id: 'ID',
+      client_id: 'クライアントID',
+      email: 'メールアドレス',
+      phone: '電話番号',
+      birthday: '生年月日',
+      weight: '体重',
+      height: '身長',
+      is_wearing: '装着状況'
+    };
+    return labels[field];
   };
 
   // Fetch users data from API
@@ -70,7 +153,7 @@ const UserListPage = () => {
     router.push('/user/register');
   };
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = sortUsers(users.filter(user => {
     const wearingStatusText = getWearingStatus(user.is_wearing).text;
     return (
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,7 +163,7 @@ const UserListPage = () => {
       (user.line_id && user.line_id.toLowerCase().includes(searchTerm.toLowerCase())) ||
       wearingStatusText.includes(searchTerm)
     );
-  });
+  }));
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -164,16 +247,21 @@ const UserListPage = () => {
             </div>
           </div>
 
-          {/* Search Bar */}
+          {/* Search Bar and Sort Info */}
           <div className="p-6 border-b border-gray-200">
-            <div className="max-w-md">
-              <input
-                type="text"
-                placeholder="名前、メールアドレス、電話番号、LINE ID、装着状況で検索..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="max-w-md">
+                <input
+                  type="text"
+                  placeholder="名前、メールアドレス、電話番号、LINE ID、装着状況で検索..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
+              </div>
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">ソート:</span> {getSortFieldLabel(sortConfig.field)} {sortConfig.direction === 'asc' ? '昇順' : '降順'}
+              </div>
             </div>
           </div>
 
@@ -182,20 +270,50 @@ const UserListPage = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-r-2 border-blue-200">
-                    装着状況
+                  <th 
+                    className="px-6 py-4 text-left text-sm font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border-r-2 border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => handleSort('is_wearing')}
+                  >
+                    <div className="flex items-center">
+                      装着状況
+                      <span className="ml-1 text-xs">{getSortIcon('is_wearing')}</span>
+                    </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    利用者情報
+                  <th 
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('name')}
+                  >
+                    <div className="flex items-center">
+                      利用者情報
+                      <span className="ml-1 text-xs">{getSortIcon('name')}</span>
+                    </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    連絡先
+                  <th 
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('email')}
+                  >
+                    <div className="flex items-center">
+                      連絡先
+                      <span className="ml-1 text-xs">{getSortIcon('email')}</span>
+                    </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    プロフィール
+                  <th 
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('birthday')}
+                  >
+                    <div className="flex items-center">
+                      プロフィール
+                      <span className="ml-1 text-xs">{getSortIcon('birthday')}</span>
+                    </div>
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    クライアント・LINE
+                  <th 
+                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('client_id')}
+                  >
+                    <div className="flex items-center">
+                      クライアント・LINE
+                      <span className="ml-1 text-xs">{getSortIcon('client_id')}</span>
+                    </div>
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     アラート設定

@@ -33,6 +33,14 @@ const UserRegister = () => {
       ...prev,
       [name]: type === 'number' ? parseInt(value) || 0 : value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
   };
 
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,21 +53,96 @@ const UserRegister = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
-    if (formData.client_id <= 0) newErrors.client_id = 'クライアントIDは必須です';
-    if (!formData.line_id.trim()) newErrors.line_id = 'LINE IDは必須です';
-    if (!formData.name.trim()) newErrors.name = '名前は必須です';
-    if (!formData.email.trim()) newErrors.email = 'メールアドレスは必須です';
-    if (!formData.phone.trim()) newErrors.phone = '電話番号は必須です';
-    if (!formData.birthday) newErrors.birthday = '生年月日は必須です';
-    if (formData.weight <= 0) newErrors.weight = '体重は0より大きい値を入力してください';
-    if (formData.height <= 0) newErrors.height = '身長は0より大きい値を入力してください';
-    if (!formData.address.trim()) newErrors.address = '住所は必須です';
+    // Client ID validation
+    if (formData.client_id <= 0) {
+      newErrors.client_id = 'クライアントIDは必須です';
+    }
     
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // LINE ID validation
+    if (!formData.line_id.trim()) {
+      newErrors.line_id = 'LINE IDは必須です';
+    } else if (formData.line_id.length < 3) {
+      newErrors.line_id = 'LINE IDは3文字以上で入力してください';
+    }
+    
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = '名前は必須です';
+    } else if (formData.name.length < 2) {
+      newErrors.name = '名前は2文字以上で入力してください';
+    } else if (formData.name.length > 50) {
+      newErrors.name = '名前は50文字以内で入力してください';
+    }
+    
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'メールアドレスは必須です';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = '有効なメールアドレスを入力してください';
+    } else if (formData.email.length > 100) {
+      newErrors.email = 'メールアドレスは100文字以内で入力してください';
+    }
+    
+    // Phone validation
+    if (!formData.phone.trim()) {
+      newErrors.phone = '電話番号は必須です';
+    } else if (!/^[\d\-\(\)\s]+$/.test(formData.phone)) {
+      newErrors.phone = '電話番号は数字、ハイフン、括弧、スペースのみ使用可能です';
+    } else if (formData.phone.replace(/[\d\-\(\)\s]/g, '').length > 0) {
+      newErrors.phone = '電話番号に無効な文字が含まれています';
+    }
+    
+    // Birthday validation
+    if (!formData.birthday) {
+      newErrors.birthday = '生年月日は必須です';
+    } else {
+      const birthDate = new Date(formData.birthday);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
+      
+      if (actualAge < 0) {
+        newErrors.birthday = '生年月日は今日以前の日付を入力してください';
+      } else if (actualAge > 120) {
+        newErrors.birthday = '生年月日が正しくありません';
+      }
+    }
+    
+    // Weight validation
+    if (formData.weight <= 0) {
+      newErrors.weight = '体重は0より大きい値を入力してください';
+    } else if (formData.weight > 300) {
+      newErrors.weight = '体重は300kg以下で入力してください';
+    }
+    
+    // Height validation
+    if (formData.height <= 0) {
+      newErrors.height = '身長は0より大きい値を入力してください';
+    } else if (formData.height > 250) {
+      newErrors.height = '身長は250cm以下で入力してください';
+    }
+    
+    // Address validation
+    if (!formData.address.trim()) {
+      newErrors.address = '住所は必須です';
+    } else if (formData.address.length < 5) {
+      newErrors.address = '住所は5文字以上で入力してください';
+    } else if (formData.address.length > 200) {
+      newErrors.address = '住所は200文字以内で入力してください';
     }
 
     setErrors(newErrors);
+    
+    // Show toast notification if there are validation errors
+    if (Object.keys(newErrors).length > 0) {
+      const errorCount = Object.keys(newErrors).length;
+      toast.error(`${errorCount}個の入力エラーがあります。入力内容を確認してください。`, {
+        duration: 4000,
+        position: 'top-center',
+      });
+    }
+    
     return Object.keys(newErrors).length === 0;
   };
 
@@ -145,7 +228,11 @@ const UserRegister = () => {
                 name="client_id"
                 value={formData.client_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                  errors.client_id 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="クライアントIDを入力してください"
                 min="1"
               />
@@ -163,7 +250,11 @@ const UserRegister = () => {
                 name="line_id"
                 value={formData.line_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                  errors.line_id 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="LINE IDを入力してください"
               />
               {errors.line_id && <p className="text-red-500 text-sm mt-1">{errors.line_id}</p>}
@@ -180,7 +271,11 @@ const UserRegister = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                  errors.name 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="お名前を入力してください"
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
@@ -197,7 +292,11 @@ const UserRegister = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                  errors.email 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="メールアドレスを入力してください"
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
@@ -214,7 +313,11 @@ const UserRegister = () => {
                 name="phone"
                 value={formData.phone}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                  errors.phone 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="電話番号を入力してください"
               />
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -231,7 +334,11 @@ const UserRegister = () => {
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                  errors.address 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
                 placeholder="住所を入力してください"
               />
               {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
@@ -318,7 +425,11 @@ const UserRegister = () => {
                 name="birthday"
                 value={formData.birthday}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                  errors.birthday 
+                    ? 'border-red-500 focus:ring-red-500' 
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
               />
               {errors.birthday && <p className="text-red-500 text-sm mt-1">{errors.birthday}</p>}
             </div>
@@ -336,7 +447,11 @@ const UserRegister = () => {
                   value={formData.weight}
                   onChange={handleInputChange}
                   min="1"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                    errors.weight 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="体重を入力"
                 />
                 {errors.weight && <p className="text-red-500 text-sm mt-1">{errors.weight}</p>}
@@ -353,7 +468,11 @@ const UserRegister = () => {
                   value={formData.height}
                   onChange={handleInputChange}
                   min="1"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                    errors.height 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
                   placeholder="身長を入力"
                 />
                 {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
