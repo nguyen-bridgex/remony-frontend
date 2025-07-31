@@ -95,7 +95,7 @@ export const getUserSettings = async (
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        userId
+        userId: userId.toString().padStart(6, '0'),
     }),
     });
 
