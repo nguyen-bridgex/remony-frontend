@@ -3,12 +3,67 @@ import { useRouter } from 'next/router';
 import { User } from '../../types/user';
 import { getUser } from '../../api/users';
 
+interface ColorTheme {
+  id: string;
+  name: string;
+  background: string;
+  loadingBg: string;
+  accent: string;
+}
+
+const colorThemes: ColorTheme[] = [
+  {
+    id: 'blue',
+    name: 'ブルー',
+    background: 'bg-gradient-to-br from-blue-50 to-indigo-100',
+    loadingBg: 'bg-gradient-to-br from-blue-50 to-indigo-100',
+    accent: 'border-blue-600'
+  },
+  {
+    id: 'green',
+    name: 'グリーン',
+    background: 'bg-gradient-to-br from-green-50 to-emerald-100',
+    loadingBg: 'bg-gradient-to-br from-green-50 to-emerald-100',
+    accent: 'border-green-600'
+  },
+  {
+    id: 'purple',
+    name: 'パープル',
+    background: 'bg-gradient-to-br from-purple-50 to-violet-100',
+    loadingBg: 'bg-gradient-to-br from-purple-50 to-violet-100',
+    accent: 'border-purple-600'
+  },
+  {
+    id: 'pink',
+    name: 'ピンク',
+    background: 'bg-gradient-to-br from-pink-50 to-rose-100',
+    loadingBg: 'bg-gradient-to-br from-pink-50 to-rose-100',
+    accent: 'border-pink-600'
+  },
+  {
+    id: 'orange',
+    name: 'オレンジ',
+    background: 'bg-gradient-to-br from-orange-50 to-amber-100',
+    loadingBg: 'bg-gradient-to-br from-orange-50 to-amber-100',
+    accent: 'border-orange-600'
+  },
+  {
+    id: 'teal',
+    name: 'ティール',
+    background: 'bg-gradient-to-br from-teal-50 to-cyan-100',
+    loadingBg: 'bg-gradient-to-br from-teal-50 to-cyan-100',
+    accent: 'border-teal-600'
+  }
+];
+
 const UserDetailPage = () => {
   const router = useRouter();
   const { id } = router.query;
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTheme, setSelectedTheme] = useState<ColorTheme>(colorThemes[0]);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   useEffect(() => {
     if (id && typeof id === 'string') {
@@ -51,7 +106,7 @@ const UserDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className={`min-h-screen ${selectedTheme.background} flex items-center justify-center`}>
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-gray-600 mt-4 text-center">ユーザー情報を読み込んでいます...</p>
@@ -62,7 +117,7 @@ const UserDetailPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className={`min-h-screen ${selectedTheme.background} flex items-center justify-center`}>
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
           <div className="text-red-500 text-center mb-4">
             <svg className="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
@@ -84,7 +139,7 @@ const UserDetailPage = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className={`min-h-screen ${selectedTheme.background} flex items-center justify-center`}>
         <div className="bg-white p-8 rounded-lg shadow-lg">
           <p className="text-gray-600 text-center">ユーザーが見つかりません</p>
         </div>
@@ -93,8 +148,39 @@ const UserDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
+    <div className={`min-h-screen ${selectedTheme.background} py-8`}>
       <div className="max-w-4xl mx-auto px-4">
+        {/* Color Theme Picker */}
+        <div className="bg-white rounded-lg shadow-lg p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-800">背景テーマ</h3>
+            <button
+              onClick={() => setShowColorPicker(!showColorPicker)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              {showColorPicker ? '閉じる' : 'カラー変更'}
+            </button>
+          </div>
+          
+          {showColorPicker && (
+            <div className="mt-4 grid grid-cols-3 md:grid-cols-6 gap-3">
+              {colorThemes.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => setSelectedTheme(theme)}
+                  className={`p-3 rounded-lg text-center transition-all duration-200 ${theme.background} ${
+                    selectedTheme.id === theme.id 
+                      ? `ring-4 ring-blue-500 ${theme.accent} border-2` 
+                      : 'border-2 border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="text-sm font-medium text-gray-700">{theme.name}</div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Header */}
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between">
