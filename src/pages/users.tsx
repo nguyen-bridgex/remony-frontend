@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { User, GenderOptions } from '../types/user';
 import { getUsers } from '../api/users';
 
-type SortField = 'name' | 'id' | 'client_id' | 'email' | 'phone' | 'birthday' | 'weight' | 'height' | 'is_wearing';
+type SortField = 'name' | 'id' | 'line_id' | 'email' | 'phone' | 'birthday' | 'weight' | 'height' | 'is_wearing';
 type SortDirection = 'asc' | 'desc';
 
 interface SortConfig {
@@ -67,9 +67,15 @@ const UserListPage = () => {
   };
 
   const sortUsers = (usersToSort: User[]) => {
-    return [...usersToSort].sort((a, b) => {
+    console.log({usersToSort, sortConfig});
+    const sortedUsers = [...usersToSort].sort((a, b) => {
       let aValue: any = a[sortConfig.field];
       let bValue: any = b[sortConfig.field];
+
+      // Handle null/undefined values
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return sortConfig.direction === 'asc' ? 1 : -1;
+      if (bValue == null) return sortConfig.direction === 'asc' ? -1 : 1;
 
       // Handle special cases
       if (sortConfig.field === 'birthday') {
@@ -79,13 +85,17 @@ const UserListPage = () => {
         // Sort wearing status: wearing (1) first, then not wearing (0), then unknown (undefined)
         aValue = aValue === 1 ? 3 : aValue === 0 ? 2 : 1;
         bValue = bValue === 1 ? 3 : bValue === 0 ? 2 : 1;
-      }
-
-      // Handle string comparison
-      if (typeof aValue === 'string' && typeof bValue === 'string') {
+      } else if (['id', 'weight', 'height'].includes(sortConfig.field)) {
+        // Handle numeric fields
+        aValue = Number(aValue) || 0;
+        bValue = Number(bValue) || 0;
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        // Handle string comparison (case-insensitive)
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
       }
+
+      console.log({aValue, bValue});
 
       if (aValue < bValue) {
         return sortConfig.direction === 'asc' ? -1 : 1;
@@ -95,6 +105,8 @@ const UserListPage = () => {
       }
       return 0;
     });
+    console.log({sortedUsers});
+    return sortedUsers;
   };
 
   const getSortIcon = (field: SortField) => {
@@ -108,7 +120,7 @@ const UserListPage = () => {
     const labels: Record<SortField, string> = {
       name: '名前',
       id: 'ID',
-      client_id: 'クライアントID',
+      line_id: 'クライアントID',
       email: 'メールアドレス',
       phone: '電話番号',
       birthday: '生年月日',
@@ -308,11 +320,11 @@ const UserListPage = () => {
                   </th>
                   <th 
                     className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => handleSort('client_id')}
+                    onClick={() => handleSort('line_id')}
                   >
                     <div className="flex items-center">
                       クライアント・LINE
-                      <span className="ml-1 text-xs">{getSortIcon('client_id')}</span>
+                      <span className="ml-1 text-xs">{getSortIcon('line_id')}</span>
                     </div>
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -370,7 +382,7 @@ const UserListPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        Client ID: {user.client_id}
+                        Client ID: {user.line_id}
                       </div>
                       <div className="text-sm text-gray-500 font-mono">
                         {user.line_id || user.line_id}
