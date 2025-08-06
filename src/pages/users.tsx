@@ -67,7 +67,6 @@ const UserListPage = () => {
   };
 
   const sortUsers = (usersToSort: User[]) => {
-    console.log({usersToSort, sortConfig});
     const sortedUsers = [...usersToSort].sort((a, b) => {
       let aValue: any = a[sortConfig.field];
       let bValue: any = b[sortConfig.field];
@@ -94,8 +93,6 @@ const UserListPage = () => {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
       }
-
-      console.log({aValue, bValue});
 
       if (aValue < bValue) {
         return sortConfig.direction === 'asc' ? -1 : 1;
