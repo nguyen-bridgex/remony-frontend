@@ -24,6 +24,10 @@ const nextConfig = {
         source: '/api/registUser/:path*',
         destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/regist-user/:path*`,
       },
+      {
+        source: '/api/deleteUser/:path*',
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/delete-user/:path*`,
+      },
     ];
   },
 };
