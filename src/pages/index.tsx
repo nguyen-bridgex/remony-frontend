@@ -81,7 +81,7 @@ const Home: NextPage = () => {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">アラート設定</h2>
               <p className="text-gray-600 mb-6">
-                利用者の心拍数や皮膚温のアラート設定を管理できます。メッセージ設定も可能です。
+                利用者の心拍数や表体温のアラート設定を管理できます。メッセージ設定も可能です。
               </p>
               <button 
                 className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors"

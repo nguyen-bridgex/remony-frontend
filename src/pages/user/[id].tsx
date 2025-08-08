@@ -284,7 +284,7 @@ const UserDetailPage = () => {
               <p className="text-gray-900 bg-gray-50 p-2 rounded">{formatAlertStatus(user.heart_rate_alert_enabled)}</p>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">皮膚温度アラート</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">表体温度アラート</label>
               <p className="text-gray-900 bg-gray-50 p-2 rounded">{formatAlertStatus(user.skin_temp_alert_enabled)}</p>
             </div>
             <div>

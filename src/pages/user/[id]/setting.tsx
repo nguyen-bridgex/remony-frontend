@@ -153,7 +153,7 @@ const METRICS_CONFIG: MetricConfig[] = [
   },
   {
     key: 'skin_temp_lower_threshold',
-    name: '皮膚温',
+    name: '表体温',
     unit: '℃',
     color: 'pink',
     lowerKey: 'skin_temp_lower_threshold',

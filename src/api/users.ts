@@ -12,6 +12,11 @@ export interface GetUserResponse {
     data?: User;
 }
 
+export interface DeleteUserResponse {
+    success: boolean;
+    message: string;
+}
+
 export const getUsers = async (): Promise<GetUsersResponse> => {
     try {
         const response = await fetch('/api/getUsers', {
@@ -111,6 +116,39 @@ export const registUser = async (user: User): Promise<GetUserResponse> => {
         return {
             success: false,
             message: error instanceof Error ? error.message : 'An error occurred while registing user',
+        };
+    }
+};
+
+export const deleteUser = async (userId: number): Promise<DeleteUserResponse> => {
+    try {
+        const response = await fetch('/api/deleteUser', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: userId.toString().padStart(6, '0') }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+            return {
+                success: true,
+                message: 'User deleted successfully',
+            };
+        } else {
+            throw new Error(result.message || 'Failed to delete user');
+        }
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'An error occurred while deleting user',
         };
     }
 };

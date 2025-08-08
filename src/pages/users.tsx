@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import { User, GenderOptions } from '../types/user';
-import { getUsers } from '../api/users';
+import { getUsers, deleteUser } from '../api/users';
 
 type SortField = 'name' | 'id' | 'line_id' | 'email' | 'phone' | 'birthday' | 'weight' | 'height' | 'is_wearing';
 type SortDirection = 'asc' | 'desc';
@@ -23,6 +23,7 @@ const UserListPage = () => {
     field: 'id',
     direction: 'asc'
   });
+  const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
 
   
   // Function to get wearing status
@@ -162,6 +163,44 @@ const UserListPage = () => {
     router.push('/user/register');
   };
 
+  const handleGoHome = () => {
+    router.push('/');
+  };
+
+  const handleDeleteUser = async (userId: number, userName: string) => {
+    const confirmed = window.confirm(`${userName}さんを削除してもよろしいですか？この操作は取り消せません。`);
+    
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingUserId(userId);
+    
+    try {
+      const result = await deleteUser(userId);
+      
+      if (result.success) {
+        // Remove the user from the local state
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+        toast.success(`${userName}さんを削除しました`);
+        
+        // Reset to first page if current page becomes empty
+        const filteredCount = users.filter(user => user.id !== userId).length;
+        const newTotalPages = Math.ceil(filteredCount / itemsPerPage);
+        if (currentPage > newTotalPages && newTotalPages > 0) {
+          setCurrentPage(1);
+        }
+      } else {
+        toast.error(`削除に失敗しました: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast.error('削除中にエラーが発生しました。');
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   const filteredUsers = sortUsers(users.filter(user => {
     const wearingStatusText = getWearingStatus(user.is_wearing).text;
     return (
@@ -214,7 +253,7 @@ const UserListPage = () => {
     if (user.sleep_alert_enabled) alerts.push('睡眠');
     if (user.bmr_cals_alert_enabled) alerts.push('基礎代謝');
     if (user.act_cals_alert_enabled) alerts.push('活動カロリー');
-    if (user.skin_temp_alert_enabled) alerts.push('皮膚温');
+    if (user.skin_temp_alert_enabled) alerts.push('表体温');
     if (user.solar_gen_alert_enabled) alerts.push('太陽光発電');
     if (user.thermal_gen_alert_enabled) alerts.push('熱発電');
     
@@ -234,7 +273,7 @@ const UserListPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-full mx-auto px-4">
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
@@ -247,12 +286,20 @@ const UserListPage = () => {
                   見守りサービス - 登録利用者一覧
                 </p>
               </div>
-              <button
-                onClick={handleNewUser}
-                className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-lg"
-              >
-                新しい利用者を登録
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleGoHome}
+                  className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-400 transition-colors shadow-lg border-2 border-blue-400"
+                >
+                  ホームに戻る
+                </button>
+                <button
+                  onClick={handleNewUser}
+                  className="bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors shadow-lg"
+                >
+                  新しい利用者を登録
+                </button>
+              </div>
             </div>
           </div>
 
@@ -276,7 +323,7 @@ const UserListPage = () => {
 
           {/* Users Table */}
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-[1200px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th 
@@ -326,6 +373,9 @@ const UserListPage = () => {
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     アラート設定
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    アクション
                   </th>
                 </tr>
               </thead>
@@ -389,6 +439,18 @@ const UserListPage = () => {
                       <span className="inline-flex px-4 py-2 text-xs font-semibold rounded-full bg-green-100 text-green-800 border-2 border-green-200">
                         {getAlertSettings(user)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent row click
+                          handleDeleteUser(user.id, user.name);
+                        }}
+                        disabled={deletingUserId === user.id}
+                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {deletingUserId === user.id ? '削除中...' : '削除'}
+                      </button>
                     </td>
                   </tr>
                   );
