@@ -178,18 +178,27 @@ const UserListPage = () => {
     
     try {
       const result = await deleteUser(userId);
+      console.log('Delete result:', result);
       
       if (result.success) {
         // Remove the user from the local state
-        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
-        toast.success(`${userName}さんを削除しました`);
+        setUsers(prevUsers => {
+          console.log('Previous users count:', prevUsers.length);
+          const updatedUsers = prevUsers.filter(user => user.id !== userId);
+          console.log('Updated users count:', updatedUsers.length);
+          console.log('Deleted user ID:', userId);
+          
+          // Reset to first page if current page becomes empty
+          const filteredCount = updatedUsers.length;
+          const newTotalPages = Math.ceil(filteredCount / itemsPerPage);
+          if (currentPage > newTotalPages && newTotalPages > 0) {
+            setCurrentPage(1);
+          }
+          
+          return updatedUsers;
+        });
         
-        // Reset to first page if current page becomes empty
-        const filteredCount = users.filter(user => user.id !== userId).length;
-        const newTotalPages = Math.ceil(filteredCount / itemsPerPage);
-        if (currentPage > newTotalPages && newTotalPages > 0) {
-          setCurrentPage(1);
-        }
+        toast.success(`${userName}さんを削除しました`);
       } else {
         toast.error(`削除に失敗しました: ${result.message}`);
       }

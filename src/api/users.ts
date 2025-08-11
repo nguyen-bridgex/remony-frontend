@@ -136,10 +136,11 @@ export const deleteUser = async (userId: number): Promise<DeleteUserResponse> =>
 
         const result = await response.json();
         
-        if (result.success) {
+        // Check if the response indicates successful deletion
+        if (result.message && result.message.includes('marked as deleted') && result.user_id) {
             return {
                 success: true,
-                message: 'User deleted successfully',
+                message: result.message,
             };
         } else {
             throw new Error(result.message || 'Failed to delete user');
