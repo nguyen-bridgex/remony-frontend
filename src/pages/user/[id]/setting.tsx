@@ -256,8 +256,8 @@ const AlertSettingsPage = () => {
       setIsLoadingUsers(true);
       try {
         const result = await getUsers();
-        if (result.success && result.data) {
-          setUsers(result.data);
+        if (result.success && result.users) {
+          setUsers(result.users);
           setSelectedUserId(id ? parseInt(id as string) : 0);
         } else {
           console.error('Failed to fetch users:', result.message);

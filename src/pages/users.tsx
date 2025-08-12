@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import { User, GenderOptions } from '../types/user';
-import { getUsers, deleteUser } from '../api/users';
+import { getUsers, deleteUser, PaginationInfo } from '../api/users';
 
 type SortField = 'name' | 'id' | 'line_id' | 'email' | 'phone' | 'birthday' | 'weight' | 'height' | 'is_wearing';
 type SortDirection = 'asc' | 'desc';
@@ -18,12 +18,14 @@ const UserListPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(50);
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     field: 'id',
     direction: 'asc'
   });
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout | null>(null);
 
   
   // Function to get wearing status
@@ -49,7 +51,7 @@ const UserListPage = () => {
     }
   };
 
-  // Sorting functions
+  // Server-side sorting function
   const handleSort = (field: SortField) => {
     const newDirection = sortConfig.field === field && sortConfig.direction === 'asc' ? 'desc' : 'asc';
     setSortConfig({
@@ -65,46 +67,6 @@ const UserListPage = () => {
       duration: 2000,
       position: 'top-center',
     });
-  };
-
-  const sortUsers = (usersToSort: User[]) => {
-    const sortedUsers = [...usersToSort].sort((a, b) => {
-      let aValue: any = a[sortConfig.field];
-      let bValue: any = b[sortConfig.field];
-
-      // Handle null/undefined values
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return sortConfig.direction === 'asc' ? 1 : -1;
-      if (bValue == null) return sortConfig.direction === 'asc' ? -1 : 1;
-
-      // Handle special cases
-      if (sortConfig.field === 'birthday') {
-        aValue = new Date(aValue).getTime();
-        bValue = new Date(bValue).getTime();
-      } else if (sortConfig.field === 'is_wearing') {
-        // Sort wearing status: wearing (1) first, then not wearing (0), then unknown (undefined)
-        aValue = aValue === 1 ? 3 : aValue === 0 ? 2 : 1;
-        bValue = bValue === 1 ? 3 : bValue === 0 ? 2 : 1;
-      } else if (['id', 'weight', 'height'].includes(sortConfig.field)) {
-        // Handle numeric fields
-        aValue = Number(aValue) || 0;
-        bValue = Number(bValue) || 0;
-      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
-        // Handle string comparison (case-insensitive)
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
-      }
-
-      if (aValue < bValue) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-    console.log({sortedUsers});
-    return sortedUsers;
   };
 
   const getSortIcon = (field: SortField) => {
@@ -134,26 +96,36 @@ const UserListPage = () => {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        const result = await getUsers();
+        const offset = (currentPage - 1) * itemsPerPage;
+        const result = await getUsers({
+          limit: itemsPerPage,
+          offset: offset,
+          order_by: `users.${sortConfig.field}`,
+          order_direction: sortConfig.direction.toUpperCase() as 'ASC' | 'DESC',
+          search: searchTerm || undefined,
+        });
         
-        if (result.success && result.data) {
-          setUsers(result.data);
+        if (result.success && result.users) {
+          setUsers(result.users);
+          setPagination(result.pagination || null);
         } else {
           console.error('Failed to fetch users:', result.message);
           toast.error(`利用者の取得に失敗しました: ${result.message}`);
           setUsers([]);
+          setPagination(null);
         }
       } catch (error) {
         console.error('Error fetching users:', error);
         toast.error('利用者の取得中にエラーが発生しました。');
         setUsers([]);
+        setPagination(null);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchUsers();
-  }, []);
+  }, [currentPage, itemsPerPage, sortConfig.field, sortConfig.direction, searchTerm]);
 
   const handleUserClick = (userId: number) => {
     router.push(`/user/${userId}`);
@@ -210,27 +182,30 @@ const UserListPage = () => {
     }
   };
 
-  const filteredUsers = sortUsers(users.filter(user => {
-    const wearingStatusText = getWearingStatus(user.is_wearing).text;
-    return (
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone.includes(searchTerm) ||
-      user.line_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.line_id && user.line_id.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      wearingStatusText.includes(searchTerm)
-    );
-  }));
+  // Server-side pagination - use users directly
+  const paginatedUsers = users;
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+  // Pagination calculations from server response
+  const totalPages = pagination?.total_pages || 1;
+  const startIndex = pagination?.offset || 0;
+  const endIndex = startIndex + (pagination?.limit || itemsPerPage);
+  const totalCount = pagination?.total_count || users.length;
 
-  // Reset to first page when search term changes
+  // Reset to first page when search term changes with debounce
   useEffect(() => {
-    setCurrentPage(1);
+    if (searchDebounce) {
+      clearTimeout(searchDebounce);
+    }
+    
+    const timeout = setTimeout(() => {
+      setCurrentPage(1);
+    }, 300); // 300ms debounce
+    
+    setSearchDebounce(timeout);
+    
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
   }, [searchTerm]);
 
   const handlePageChange = (page: number) => {
@@ -469,7 +444,7 @@ const UserListPage = () => {
           </div>
 
           {/* No results message */}
-          {filteredUsers.length === 0 && !isLoading && (
+          {users.length === 0 && !isLoading && (
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg">
                 {searchTerm ? '検索結果が見つかりませんでした' : '利用者が見つかりませんでした'}
@@ -481,18 +456,18 @@ const UserListPage = () => {
           )}
 
           {/* Pagination */}
-          {filteredUsers.length > 0 && (
+          {users.length > 0 && (
             <div className="bg-gray-50 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-500">
-                  合計 {filteredUsers.length} 件の利用者 ({startIndex + 1} - {Math.min(endIndex, filteredUsers.length)} 件を表示)
+                  合計 {totalCount} 件の利用者 ({startIndex + 1} - {Math.min(endIndex, totalCount)} 件を表示)
                 </div>
                 
                 {totalPages > 1 && (
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
+                      disabled={!pagination?.has_previous}
                       className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       前へ
@@ -535,7 +510,7 @@ const UserListPage = () => {
                     
                     <button
                       onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
+                      disabled={!pagination?.has_next}
                       className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       次へ

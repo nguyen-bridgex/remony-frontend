@@ -1,9 +1,27 @@
 import { User } from "../types/user";
 
+export interface PaginationInfo {
+    total_count: number;
+    total_pages: number;
+    current_page: number;
+    limit: number;
+    offset: number;
+    has_next: boolean;
+    has_previous: boolean;
+}
+
 export interface GetUsersResponse {
     success: boolean;
-    message: string;
-    data?: User[];
+    message?: string;
+    users?: User[];
+    pagination?: PaginationInfo;
+    filters?: {
+        search?: string;
+        alert_enabled?: number;
+        has_settings?: boolean;
+        order_by?: string;
+        order_direction?: string;
+    };
 }
 
 export interface GetUserResponse {
@@ -17,14 +35,28 @@ export interface DeleteUserResponse {
     message: string;
 }
 
-export const getUsers = async (): Promise<GetUsersResponse> => {
+export interface GetUsersParams {
+    limit?: number;
+    offset?: number;
+    search?: string;
+    order_by?: string;
+    order_direction?: 'ASC' | 'DESC';
+}
+
+export const getUsers = async (params: GetUsersParams = {}): Promise<GetUsersResponse> => {
     try {
+        const requestBody = {
+            limit: params.limit || 50,
+            offset: params.offset || 0,
+            ...params
+        };
+
         const response = await fetch('/api/getUsers', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({}),
+            body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
@@ -33,12 +65,13 @@ export const getUsers = async (): Promise<GetUsersResponse> => {
 
         const result = await response.json();
         
-        // Handle the response structure where users are in a 'users' array
-        if (result.users && Array.isArray(result.users)) {
+        // Handle the new response structure
+        if (result.success && result.users && Array.isArray(result.users)) {
             return {
                 success: true,
-                message: 'Users fetched successfully',
-                data: result.users
+                users: result.users,
+                pagination: result.pagination,
+                filters: result.filters
             };
         } else {
             throw new Error('Invalid response structure: users array not found');
