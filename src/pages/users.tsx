@@ -106,7 +106,18 @@ const UserListPage = () => {
         });
         
         if (result.success && result.users) {
-          setUsers(result.users);
+          let nextUsers = result.users;
+          if (sortConfig.field === 'birthday') {
+            nextUsers = [...nextUsers].sort((a, b) => {
+              const aTime = a.birthday ? new Date(a.birthday).getTime() : 0;
+              const bTime = b.birthday ? new Date(b.birthday).getTime() : 0;
+              if (isNaN(aTime) && isNaN(bTime)) return 0;
+              if (isNaN(aTime)) return sortConfig.direction === 'asc' ? 1 : -1;
+              if (isNaN(bTime)) return sortConfig.direction === 'asc' ? -1 : 1;
+              return sortConfig.direction === 'asc' ? aTime - bTime : bTime - aTime;
+            });
+          }
+          setUsers(nextUsers);
           setPagination(result.pagination || null);
         } else {
           console.error('Failed to fetch users:', result.message);
