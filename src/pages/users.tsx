@@ -150,6 +150,10 @@ const UserListPage = () => {
     router.push('/');
   };
 
+  const handleEditUser = (userId: number) => {
+    router.push(`/user/${userId}/edit`);
+  };
+
   const handleDeleteUser = async (userId: number, userName: string) => {
     const confirmed = window.confirm(`${userName}さんを削除してもよろしいですか？この操作は取り消せません。`);
     
@@ -436,16 +440,27 @@ const UserListPage = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent row click
-                          handleDeleteUser(user.id, user.name);
-                        }}
-                        disabled={deletingUserId === user.id}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {deletingUserId === user.id ? '削除中...' : '削除'}
-                      </button>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent row click
+                            handleEditUser(user.id);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          編集
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent row click
+                            handleDeleteUser(user.id, user.name);
+                          }}
+                          disabled={deletingUserId === user.id}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {deletingUserId === user.id ? '削除中...' : '削除'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   );

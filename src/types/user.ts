@@ -10,6 +10,7 @@ export interface User {
   weight: number;
   height: number;
   address: string; // 住所を追加
+  office?: string; // 事業所
   gateway_id?: string; // ゲートウェイID
   uid?: string; // UID
   device_id?: string; // デバイスID
@@ -37,6 +38,7 @@ export interface UserFormData {
   weight: number;
   height: number;
   address: string; // 住所を追加
+  office: string; // 事業所
   gateway_id: string; // ゲートウェイID
   uid: string; // UID
   device_id: string; // デバイスID
@@ -47,6 +49,27 @@ export interface UserFormData {
 export const GenderOptions = [
   { value: 1, label: '男性' },
   { value: 0, label: '女性' }
+];
+
+export const OfficeOptions = [
+  { value: 'おうちのカンゴ', label: 'おうちのカンゴ' },
+  { value: 'おうちのカンゴ代々木上原サテライト', label: 'おうちのカンゴ代々木上原サテライト' },
+  { value: 'おうちのカンゴ上池台サテライト', label: 'おうちのカンゴ上池台サテライト' },
+  { value: 'おうちのカンゴ上大崎サテライト', label: 'おうちのカンゴ上大崎サテライト' },
+  { value: 'おうちのカンゴ立川サテライト', label: 'おうちのカンゴ立川サテライト' },
+  { value: 'おうちのカンゴ二子玉川サテライト', label: 'おうちのカンゴ二子玉川サテライト' },
+  { value: 'おうちのカンゴきたみサテライト', label: 'おうちのカンゴきたみサテライト' },
+  { value: 'おうちのカンゴ代官山サテライト', label: 'おうちのカンゴ代官山サテライト' },
+  { value: 'おうちのカンゴ三軒茶屋サテライト', label: 'おうちのカンゴ三軒茶屋サテライト' },
+  { value: 'おうちのカンゴ四ツ谷サテライト', label: 'おうちのカンゴ四ツ谷サテライト' },
+  { value: 'おうちのカンゴ麻布十番サテライト', label: 'おうちのカンゴ麻布十番サテライト' },
+  { value: 'おうちのカンゴ中野サテライト', label: 'おうちのカンゴ中野サテライト' },
+  { value: 'おうちのカンゴ代田橋サテライト', label: 'おうちのカンゴ代田橋サテライト' },
+  { value: 'おうちのカンゴ田園調布サテライト', label: 'おうちのカンゴ田園調布サテライト' },
+  { value: 'おうちのカンゴ大井町サテライト', label: 'おうちのカンゴ大井町サテライト' },
+  { value: 'おうちのカンゴ千歳船橋サテライト', label: 'おうちのカンゴ千歳船橋サテライト' },
+  { value: 'おうちのカンゴ下北沢サテライト', label: 'おうちのカンゴ下北沢サテライト' },
+  { value: 'おうちのカンゴ都立大サテライト', label: 'おうちのカンゴ都立大サテライト' }
 ];
 
 export const VitalDeviceOptions = [

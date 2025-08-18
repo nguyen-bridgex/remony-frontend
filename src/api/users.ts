@@ -1,4 +1,4 @@
-import { User } from "../types/user";
+import { User, UserFormData } from "../types/user";
 
 export interface PaginationInfo {
     total_count: number;
@@ -183,6 +183,43 @@ export const deleteUser = async (userId: number): Promise<DeleteUserResponse> =>
         return {
             success: false,
             message: error instanceof Error ? error.message : 'An error occurred while deleting user',
+        };
+    }
+};
+
+export const updateUser = async (userId: number, userData: UserFormData): Promise<GetUserResponse> => {
+    try {
+        const response = await fetch('/api/updateUser', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                userId: userId.toString().padStart(6, '0'),
+                ...userData
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+            return {
+                success: true,
+                message: 'User updated successfully',
+                data: result.user
+            };
+        } else {
+            throw new Error(result.message || 'Failed to update user');
+        }
+    } catch (error) {
+        console.error('Error updating user:', error);
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'An error occurred while updating user',
         };
     }
 };

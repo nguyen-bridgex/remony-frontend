@@ -190,6 +190,12 @@ const UserDetailPage = () => {
             </div>
             <div className="space-x-3">
               <button 
+                onClick={() => router.push(`/user/${user.id}/edit`)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                編集
+              </button>
+              <button 
                 onClick={() => router.push(`/user/${user.id}/setting`)}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -251,6 +257,10 @@ const UserDetailPage = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">住所</label>
                 <p className="text-gray-900 bg-gray-50 p-2 rounded">{user.address}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">事業所</label>
+                <p className="text-gray-900 bg-gray-50 p-2 rounded">{user.office || '未設定'}</p>
               </div>
             </div>
           </div>

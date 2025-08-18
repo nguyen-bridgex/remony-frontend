@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import { User, UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions, OfficeOptions } from '../../types/user';
-import { registUser } from '../../api/users';
+import { User, UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions, OfficeOptions } from '../../../types/user';
+import { getUser, updateUser } from '../../../api/users';
 
-const UserRegister = () => {
+const UserEdit = () => {
   const router = useRouter();
+  const { id } = router.query;
   const [formData, setFormData] = useState<UserFormData>({
     name: '',
     client_id: 0,
@@ -27,6 +28,51 @@ const UserRegister = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Load user data
+  useEffect(() => {
+    if (id) {
+      const fetchUser = async () => {
+        setIsLoading(true);
+        try {
+          const result = await getUser(parseInt(id as string));
+          if (result.success && result.data) {
+            const user = result.data;
+            setFormData({
+              name: user.name || '',
+              client_id: user.client_id || 0,
+              line_id: user.line_id || '',
+              email: user.email || '',
+              phone: user.phone || '',
+              gender: user.gender || 1,
+              birthday: user.birthday ? user.birthday.split('T')[0] : '', // Format for date input
+              weight: user.weight || 0,
+              height: user.height || 0,
+              address: user.address || '',
+              office: user.office || 'おうちのカンゴ',
+              gateway_id: user.gateway_id || '',
+              uid: user.uid || '',
+              device_id: user.device_id || '',
+              vital_device: 'remony',
+              notification_target: 'line'
+            });
+          } else {
+            toast.error('利用者情報の取得に失敗しました');
+            router.push('/users');
+          }
+        } catch (error) {
+          console.error('Error fetching user:', error);
+          toast.error('利用者情報の取得中にエラーが発生しました');
+          router.push('/users');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchUser();
+    }
+  }, [id, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -46,28 +92,16 @@ const UserRegister = () => {
 
   const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const genderValue = parseInt(e.target.value);
-    console.log('Radio change - value:', e.target.value, 'parsed:', genderValue);
+    console.log('Edit page - Radio change - value:', e.target.value, 'parsed:', genderValue);
     setFormData(prev => ({
       ...prev,
       gender: genderValue
     }));
   };
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    
-    // Client ID validation
-    if (formData.client_id <= 0) {
-      newErrors.client_id = 'クライアントIDは必須です';
-    }
-    
-    // LINE ID validation
-    if (!formData.line_id.trim()) {
-      newErrors.line_id = 'LINE IDは必須です';
-    } else if (formData.line_id.length < 3) {
-      newErrors.line_id = 'LINE IDは3文字以上で入力してください';
-    }
-    
+
     // Name validation
     if (!formData.name.trim()) {
       newErrors.name = '名前は必須です';
@@ -76,56 +110,52 @@ const UserRegister = () => {
     } else if (formData.name.length > 50) {
       newErrors.name = '名前は50文字以内で入力してください';
     }
-    
+
+    // Client ID validation
+    if (!formData.client_id || formData.client_id < 1) {
+      newErrors.client_id = 'クライアントIDは1以上の数値で入力してください';
+    }
+
+    // LINE ID validation
+    if (!formData.line_id.trim()) {
+      newErrors.line_id = 'LINE IDは必須です';
+    } else if (formData.line_id.length < 3) {
+      newErrors.line_id = 'LINE IDは3文字以上で入力してください';
+    } else if (formData.line_id.length > 100) {
+      newErrors.line_id = 'LINE IDは100文字以内で入力してください';
+    }
+
     // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
       newErrors.email = 'メールアドレスは必須です';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = '有効なメールアドレスを入力してください';
-    } else if (formData.email.length > 100) {
-      newErrors.email = 'メールアドレスは100文字以内で入力してください';
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = '正しいメールアドレスを入力してください';
     }
-    
+
     // Phone validation
+    const phoneRegex = /^[0-9\-\+\s\(\)]+$/;
     if (!formData.phone.trim()) {
       newErrors.phone = '電話番号は必須です';
-    } else if (!/^[\d\-\(\)\s]+$/.test(formData.phone)) {
-      newErrors.phone = '電話番号は数字、ハイフン、括弧、スペースのみ使用可能です';
-    } else if (formData.phone.replace(/[\d\-\(\)\s]/g, '').length > 0) {
-      newErrors.phone = '電話番号に無効な文字が含まれています';
+    } else if (!phoneRegex.test(formData.phone)) {
+      newErrors.phone = '正しい電話番号を入力してください';
     }
-    
+
     // Birthday validation
     if (!formData.birthday) {
       newErrors.birthday = '生年月日は必須です';
-    } else {
-      const birthDate = new Date(formData.birthday);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
-      
-      if (actualAge < 0) {
-        newErrors.birthday = '生年月日は今日以前の日付を入力してください';
-      } else if (actualAge > 120) {
-        newErrors.birthday = '生年月日が正しくありません';
-      }
     }
-    
+
     // Weight validation
-    if (formData.weight <= 0) {
-      newErrors.weight = '体重は0より大きい値を入力してください';
-    } else if (formData.weight > 300) {
-      newErrors.weight = '体重は300kg以下で入力してください';
+    if (!formData.weight || formData.weight < 1 || formData.weight > 300) {
+      newErrors.weight = '体重は1kg〜300kgの間で入力してください';
     }
-    
-    // Height validation
-    if (formData.height <= 0) {
-      newErrors.height = '身長は0より大きい値を入力してください';
-    } else if (formData.height > 250) {
-      newErrors.height = '身長は250cm以下で入力してください';
+
+    // Height validation  
+    if (!formData.height || formData.height < 50 || formData.height > 250) {
+      newErrors.height = '身長は50cm〜250cmの間で入力してください';
     }
-    
+
     // Address validation
     if (!formData.address.trim()) {
       newErrors.address = '住所は必須です';
@@ -136,16 +166,6 @@ const UserRegister = () => {
     }
 
     setErrors(newErrors);
-    
-    // Show toast notification if there are validation errors
-    if (Object.keys(newErrors).length > 0) {
-      const errorCount = Object.keys(newErrors).length;
-      toast.error(`${errorCount}個の入力エラーがあります。入力内容を確認してください。`, {
-        duration: 4000,
-        position: 'top-center',
-      });
-    }
-    
     return Object.keys(newErrors).length === 0;
   };
 
@@ -153,56 +173,36 @@ const UserRegister = () => {
     e.preventDefault();
     
     if (!validateForm()) {
+      toast.error('入力内容を確認してください');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Convert UserFormData to User format expected by API
-      const userData: User = {
-        id: 0, // Will be assigned by backend
-        name: formData.name,
-        client_id: formData.client_id,
-        line_id: formData.line_id,
-        email: formData.email,
-        phone: formData.phone,
-        gender: formData.gender,
-        birthday: formData.birthday,
-        weight: formData.weight,
-        height: formData.height,
-        address: formData.address,
-        office: formData.office,
-        gateway_id: formData.gateway_id || undefined,
-        uid: formData.uid || undefined,
-        device_id: formData.device_id || undefined
-      };
-
-      // Debug logging to check gender value
-      console.log('Form data gender:', formData.gender, typeof formData.gender);
-      console.log('User data being sent:', userData);
-
-      const response = await registUser(userData);
-
-      if (response.success) {
-        toast.success('利用者登録が完了しました！', {
-          duration: 4000,
+      // Debug logging to check gender value before update
+      console.log('Edit page - Form data gender:', formData.gender, typeof formData.gender);
+      console.log('Edit page - Form data being sent:', formData);
+      
+      const result = await updateUser(parseInt(id as string), formData);
+      
+      if (result.success) {
+        toast.success('利用者情報を更新しました', {
+          duration: 3000,
           position: 'top-center',
         });
-        
-        // Redirect to users page after showing success message
-        setTimeout(() => {
-          router.push('/users');
-        }, 2000);
+
+        // Redirect to user detail page
+        router.push(`/user/${id}`);
       } else {
-        toast.error(response.message || '登録に失敗しました。もう一度お試しください。', {
+        toast.error(`更新に失敗しました: ${result.message}`, {
           duration: 4000,
           position: 'top-center',
         });
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('登録中にエラーが発生しました。もう一度お試しください。', {
+      console.error('Error updating user:', error);
+      toast.error('利用者情報の更新に失敗しました', {
         duration: 4000,
         position: 'top-center',
       });
@@ -211,16 +211,31 @@ const UserRegister = () => {
     }
   };
 
+  const handleCancel = () => {
+    router.push(`/user/${id}`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="text-gray-600 mt-4 text-center">利用者情報を読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
             <h1 className="text-3xl font-bold text-white text-center">
-              利用者登録
+              利用者情報編集
             </h1>
             <p className="text-blue-100 text-center mt-2">
-              見守りサービス - 新しい利用者を登録しましょう
+              見守りサービス - 利用者の基本情報を編集
             </p>
           </div>
           
@@ -284,7 +299,7 @@ const UserRegister = () => {
                     ? 'border-red-500 focus:ring-red-500' 
                     : 'border-gray-300 focus:ring-blue-500'
                 }`}
-                placeholder="お名前を入力してください"
+                placeholder="名前を入力してください"
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
             </div>
@@ -316,7 +331,7 @@ const UserRegister = () => {
                 電話番号
               </label>
               <input
-                type="text"
+                type="tel"
                 id="phone"
                 name="phone"
                 value={formData.phone}
@@ -372,6 +387,94 @@ const UserRegister = () => {
               </select>
             </div>
 
+            {/* Gender */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                性別 (現在: {formData.gender === 1 ? '男性' : '女性'} - 値: {formData.gender})
+              </label>
+              <div className="flex gap-6">
+                {GenderOptions.map(option => (
+                  <label key={option.value} className="flex items-center">
+                    <input
+                      type="radio"
+                      name="gender"
+                      value={option.value}
+                      checked={formData.gender === option.value}
+                      onChange={handleRadioChange}
+                      className="mr-2 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-700">{option.label} (値: {option.value})</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Birthday, Weight, Height */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label htmlFor="birthday" className="block text-sm font-medium text-gray-700 mb-2">
+                  生年月日
+                </label>
+                <input
+                  type="date"
+                  id="birthday"
+                  name="birthday"
+                  value={formData.birthday}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                    errors.birthday 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
+                />
+                {errors.birthday && <p className="text-red-500 text-sm mt-1">{errors.birthday}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-2">
+                  体重 (kg)
+                </label>
+                <input
+                  type="number"
+                  id="weight"
+                  name="weight"
+                  value={formData.weight}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                    errors.weight 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
+                  placeholder="体重"
+                  min="1"
+                  max="300"
+                />
+                {errors.weight && <p className="text-red-500 text-sm mt-1">{errors.weight}</p>}
+              </div>
+
+              <div>
+                <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-2">
+                  身長 (cm)
+                </label>
+                <input
+                  type="number"
+                  id="height"
+                  name="height"
+                  value={formData.height}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
+                    errors.height 
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-gray-300 focus:ring-blue-500'
+                  }`}
+                  placeholder="身長"
+                  min="50"
+                  max="250"
+                />
+                {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
+              </div>
+            </div>
+
             {/* Device Information */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
@@ -420,153 +523,21 @@ const UserRegister = () => {
               </div>
             </div>
 
-            {/* Gender */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                性別 (現在: {formData.gender === 1 ? '男性' : '女性'} - 値: {formData.gender})
-              </label>
-              <div className="flex space-x-6">
-                {GenderOptions.map((option) => (
-                  <label key={option.value.toString()} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value={option.value.toString()}
-                      checked={formData.gender === option.value}
-                      onChange={handleRadioChange}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="ml-2 text-gray-700">{option.label} (値: {option.value})</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Birthday */}
-            <div>
-              <label htmlFor="birthday" className="block text-sm font-medium text-gray-700 mb-2">
-                生年月日
-              </label>
-              <input
-                type="date"
-                id="birthday"
-                name="birthday"
-                value={formData.birthday}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
-                  errors.birthday 
-                    ? 'border-red-500 focus:ring-red-500' 
-                    : 'border-gray-300 focus:ring-blue-500'
-                }`}
-              />
-              {errors.birthday && <p className="text-red-500 text-sm mt-1">{errors.birthday}</p>}
-            </div>
-
-            {/* Weight and Height */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-2">
-                  体重（kg）
-                </label>
-                <input
-                  type="number"
-                  id="weight"
-                  name="weight"
-                  value={formData.weight}
-                  onChange={handleInputChange}
-                  min="1"
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
-                    errors.weight 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  }`}
-                  placeholder="体重を入力"
-                />
-                {errors.weight && <p className="text-red-500 text-sm mt-1">{errors.weight}</p>}
-              </div>
-
-              <div>
-                <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-2">
-                  身長（cm）
-                </label>
-                <input
-                  type="number"
-                  id="height"
-                  name="height"
-                  value={formData.height}
-                  onChange={handleInputChange}
-                  min="1"
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all duration-200 ${
-                    errors.height 
-                      ? 'border-red-500 focus:ring-red-500' 
-                      : 'border-gray-300 focus:ring-blue-500'
-                  }`}
-                  placeholder="身長を入力"
-                />
-                {errors.height && <p className="text-red-500 text-sm mt-1">{errors.height}</p>}
-              </div>
-            </div>
-
-            {/* Vital Device */}
-            <div>
-              <label htmlFor="vital_device" className="block text-sm font-medium text-gray-700 mb-2">
-                バイタル機器
-              </label>
-              <select
-                id="vital_device"
-                name="vital_device"
-                value={formData.vital_device}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            {/* Submit buttons */}
+            <div className="flex gap-4 pt-6">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="flex-1 bg-gray-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-gray-600 transition-colors"
               >
-                {VitalDeviceOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Notification Target */}
-            {/* <div>
-              <label htmlFor="notification_target" className="block text-sm font-medium text-gray-700 mb-2">
-                通知先設定
-              </label>
-              <select
-                id="notification_target"
-                name="notification_target"
-                value={formData.notification_target}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              >
-                {NotificationTargetOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-              <p className="text-sm text-gray-500 mt-1">MVPでは処理の実装は行いません</p>
-            </div> */}
-
-            {/* Submit Button */}
-            <div className="pt-4">
+                キャンセル
+              </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`w-full py-3 px-6 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transform transition-all duration-200 ${
-                  isSubmitting
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 hover:scale-105'
-                }`}
+                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isSubmitting ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                    登録中...
-                  </div>
-                ) : (
-                  '利用者登録'
-                )}
+                {isSubmitting ? '更新中...' : '更新'}
               </button>
             </div>
           </form>
@@ -576,4 +547,4 @@ const UserRegister = () => {
   );
 };
 
-export default UserRegister; 
+export default UserEdit; 
