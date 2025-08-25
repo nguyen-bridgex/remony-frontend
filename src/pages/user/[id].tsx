@@ -259,8 +259,8 @@ const UserDetailPage = () => {
                 <p className="text-gray-900 bg-gray-50 p-2 rounded">{user.address}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">事業所</label>
-                <p className="text-gray-900 bg-gray-50 p-2 rounded">{user.office || '未設定'}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">病院/医院</label>
+                <p className="text-gray-900 bg-gray-50 p-2 rounded">{user.hospital_name || user.hospital || '未設定'}</p>
               </div>
             </div>
           </div>

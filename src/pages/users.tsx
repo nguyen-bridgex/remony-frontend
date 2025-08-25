@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
 import { User, GenderOptions } from '../types/user';
 import { getUsers, deleteUser, PaginationInfo } from '../api/users';
+import { getHospitalList, addUserToHospital, removeUserFromHospital, Hospital } from '../api/hospitals';
 
 type SortField = 'name' | 'id' | 'line_id' | 'email' | 'phone' | 'birthday' | 'weight' | 'height' | 'is_wearing';
 type SortDirection = 'asc' | 'desc';
@@ -26,6 +27,13 @@ const UserListPage = () => {
   const [deletingUserId, setDeletingUserId] = useState<number | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [searchDebounce, setSearchDebounce] = useState<NodeJS.Timeout | null>(null);
+  
+  // Hospital filtering state
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
+  const [isLoadingHospitals, setIsLoadingHospitals] = useState(true);
+  const [managingUserId, setManagingUserId] = useState<number | null>(null);
+  const [showAllUsers, setShowAllUsers] = useState(true); // New state for showing all users vs filtering
 
   
   // Function to get wearing status
@@ -103,6 +111,7 @@ const UserListPage = () => {
           order_by: `users.${sortConfig.field}`,
           order_direction: sortConfig.direction.toUpperCase() as 'ASC' | 'DESC',
           search: searchTerm || undefined,
+          hospital_id: (!showAllUsers && selectedHospitalId) ? selectedHospitalId : undefined,
         });
         
         if (result.success && result.users) {
@@ -136,7 +145,30 @@ const UserListPage = () => {
     };
 
     fetchUsers();
-  }, [currentPage, itemsPerPage, sortConfig.field, sortConfig.direction, searchTerm]);
+  }, [currentPage, itemsPerPage, sortConfig.field, sortConfig.direction, searchTerm, selectedHospitalId, showAllUsers]);
+
+  // Fetch hospitals data from API
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      setIsLoadingHospitals(true);
+      try {
+        const response = await getHospitalList();
+        if (response.success && response.hospitals) {
+          setHospitals(response.hospitals);
+        } else {
+          console.error('Failed to fetch hospitals:', response.message);
+          toast.error('病院リストの取得に失敗しました');
+        }
+      } catch (error) {
+        console.error('Error fetching hospitals:', error);
+        toast.error('病院リストの取得中にエラーが発生しました');
+      } finally {
+        setIsLoadingHospitals(false);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
 
   const handleUserClick = (userId: number) => {
     router.push(`/user/${userId}`);
@@ -259,6 +291,135 @@ const UserListPage = () => {
     return alerts.length > 0 ? alerts.join('、') : 'なし';
   };
 
+  // Hospital filtering functions
+  const handleHospitalFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const hospitalId = e.target.value ? parseInt(e.target.value) : null;
+    setSelectedHospitalId(hospitalId);
+    setCurrentPage(1); // Reset to first page when filtering
+
+    if (hospitalId) {
+      const selectedHospital = hospitals.find(h => h.id === hospitalId);
+      if (showAllUsers) {
+        toast.success(`${selectedHospital?.name}が選択されました（全ユーザー表示中）`);
+      } else {
+        toast.success(`${selectedHospital?.name}でフィルタリングしています`);
+      }
+    } else {
+      toast.success('病院が選択解除されました');
+    }
+  };
+
+  // Handle show all users toggle
+  const handleShowAllUsersChange = (showAll: boolean) => {
+    setShowAllUsers(showAll);
+    setCurrentPage(1); // Reset to first page when changing view mode
+
+    if (showAll) {
+      toast.success('全ユーザーを表示しています');
+    } else if (selectedHospitalId) {
+      const selectedHospital = hospitals.find(h => h.id === selectedHospitalId);
+      toast.success(`${selectedHospital?.name}でフィルタリングしています`);
+    } else {
+      toast.success('病院フィルターモードに変更しました');
+    }
+  };
+
+  // Add user to selected hospital
+  const handleAddUserToHospital = async (userId: number) => {
+    if (!selectedHospitalId) {
+      toast.error('病院が選択されていません');
+      return;
+    }
+
+    const user = users.find(u => u.id === userId);
+    if (user && user.hospital_id === selectedHospitalId) {
+      toast.error('この利用者は既に選択された病院に所属しています');
+      return;
+    }
+
+    setManagingUserId(userId);
+    try {
+      const result = await addUserToHospital({
+        hospital_id: selectedHospitalId,
+        user_id: userId.toString().padStart(6, '0')
+      });
+
+      if (result.success) {
+        const hospitalName = hospitals.find(h => h.id === selectedHospitalId)?.name;
+        const userName = user?.name || 'ユーザー';
+        toast.success(`${userName}さんを${hospitalName}に追加しました`);
+        // Refresh the users list to reflect the change
+        const offset = (currentPage - 1) * itemsPerPage;
+        const refreshResult = await getUsers({
+          limit: itemsPerPage,
+          offset: offset,
+          order_by: `users.${sortConfig.field}`,
+          order_direction: sortConfig.direction.toUpperCase() as 'ASC' | 'DESC',
+          search: searchTerm || undefined,
+          hospital_id: (!showAllUsers && selectedHospitalId) ? selectedHospitalId : undefined,
+        });
+        if (refreshResult.success && refreshResult.users) {
+          setUsers(refreshResult.users);
+        }
+      } else {
+        toast.error(`利用者の追加に失敗しました: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error adding user to hospital:', error);
+      toast.error('利用者の追加中にエラーが発生しました');
+    } finally {
+      setManagingUserId(null);
+    }
+  };
+
+  // Remove user from selected hospital
+  const handleRemoveUserFromHospital = async (userId: number) => {
+    if (!selectedHospitalId) {
+      toast.error('病院が選択されていません');
+      return;
+    }
+
+    const user = users.find(u => u.id === userId);
+    if (user && user.hospital_id !== selectedHospitalId) {
+      toast.error('この利用者は選択された病院に所属していません');
+      return;
+    }
+
+    setManagingUserId(userId);
+    try {
+      const result = await removeUserFromHospital({
+        hospital_id: selectedHospitalId,
+        user_id: userId.toString().padStart(6, '0')
+      });
+
+      if (result.success) {
+        const hospitalName = hospitals.find(h => h.id === selectedHospitalId)?.name;
+        const userName = user?.name || 'ユーザー';
+        toast.success(`${userName}さんを${hospitalName}から削除しました`);
+        // Refresh the users list to reflect the change
+        const offset = (currentPage - 1) * itemsPerPage;
+        const refreshResult = await getUsers({
+          limit: itemsPerPage,
+          offset: offset,
+          order_by: `users.${sortConfig.field}`,
+          order_direction: sortConfig.direction.toUpperCase() as 'ASC' | 'DESC',
+          search: searchTerm || undefined,
+          hospital_id: (!showAllUsers && selectedHospitalId) ? selectedHospitalId : undefined,
+        });
+        if (refreshResult.success && refreshResult.users) {
+          setUsers(refreshResult.users);
+        }
+      } else {
+        toast.error(`利用者の削除に失敗しました: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error removing user from hospital:', error);
+      toast.error('利用者の削除中にエラーが発生しました');
+    } finally {
+      setManagingUserId(null);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -302,27 +463,114 @@ const UserListPage = () => {
             </div>
           </div>
 
-          {/* Search Bar and Sort Info */}
-          <div className="p-6 border-b border-gray-200">
+          {/* View Mode Selection */}
+          <div className="p-6 border-b border-gray-200 bg-gray-50">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex-1 max-w-2xl">
-                <input
-                  type="text"
-                  placeholder="名前、メールアドレス、電話番号、LINE ID、装着状況で検索..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">表示モード</label>
+                <div className="flex gap-6">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="viewMode"
+                      checked={showAllUsers}
+                      onChange={() => handleShowAllUsersChange(true)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">全ユーザー表示</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="viewMode"
+                      checked={!showAllUsers}
+                      onChange={() => handleShowAllUsersChange(false)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">病院別フィルター</span>
+                  </label>
+                </div>
               </div>
               <div className="text-sm text-gray-600">
-                <span className="font-medium">ソート:</span> {getSortFieldLabel(sortConfig.field)} {sortConfig.direction === 'asc' ? '昇順' : '降順'}
+                <span className="font-medium">現在:</span> 
+                {showAllUsers ? (
+                  <span className="ml-2 px-3 py-1 bg-green-100 text-green-800 rounded-full">
+                    全ユーザー表示中
+                  </span>
+                ) : (
+                  <span className="ml-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full">
+                    病院別フィルター中
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Search Bar, Hospital Filter and Sort Info */}
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1 max-w-2xl">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">利用者検索</label>
+                  <input
+                    type="text"
+                    placeholder="名前、メールアドレス、電話番号、LINE ID、装着状況で検索..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+                <div className="w-full sm:w-80">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {showAllUsers ? '管理対象病院' : '病院フィルター'}
+                  </label>
+                  <select
+                    value={selectedHospitalId || ''}
+                    onChange={handleHospitalFilterChange}
+                    disabled={isLoadingHospitals}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+                  >
+                    <option value="">{showAllUsers ? '病院を選択してください' : 'すべての病院'}</option>
+                    {hospitals.map(hospital => (
+                      <option key={hospital.id} value={hospital.id}>
+                        {hospital.name}
+                      </option>
+                    ))}
+                  </select>
+                  {isLoadingHospitals && (
+                    <p className="text-sm text-gray-500 mt-1">病院リスト読み込み中...</p>
+                  )}
+                  {showAllUsers && selectedHospitalId && (
+                    <p className="text-sm text-green-600 mt-1">
+                      ユーザーをこの病院に追加できます
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">表示中:</span> {totalCount}人の利用者
+                  {!showAllUsers && selectedHospitalId && (
+                    <span className="ml-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                      {hospitals.find(h => h.id === selectedHospitalId)?.name}でフィルタリング中
+                    </span>
+                  )}
+                  {showAllUsers && selectedHospitalId && (
+                    <span className="ml-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                      管理対象: {hospitals.find(h => h.id === selectedHospitalId)?.name}
+                    </span>
+                  )}
+                </div>
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">ソート:</span> {getSortFieldLabel(sortConfig.field)} {sortConfig.direction === 'asc' ? '昇順' : '降順'}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Users Table */}
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1200px]">
+            <table className="w-full min-w-[1400px]">
               <thead className="bg-gray-50">
                 <tr>
                   <th 
@@ -352,6 +600,9 @@ const UserListPage = () => {
                       <span className="ml-1 text-xs">{getSortIcon('email')}</span>
                     </div>
                   </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    病院/医院
+                  </th>
                   <th 
                     className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
                     onClick={() => handleSort('birthday')}
@@ -373,8 +624,8 @@ const UserListPage = () => {
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     アラート設定
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    アクション
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                    アクション・病院管理
                   </th>
                 </tr>
               </thead>
@@ -420,6 +671,11 @@ const UserListPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
+                        {user.hospital_name || user.hospital || '未設定'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
                         {user.gender === 1 ? '男性' : '女性'} · {calculateAge(user.birthday)}歳
                       </div>
                       <div className="text-sm text-gray-500">
@@ -440,26 +696,60 @@ const UserListPage = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex gap-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent row click
-                            handleEditUser(user.id);
-                          }}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          編集
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); // Prevent row click
-                            handleDeleteUser(user.id, user.name);
-                          }}
-                          disabled={deletingUserId === user.id}
-                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {deletingUserId === user.id ? '削除中...' : '削除'}
-                        </button>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click
+                              handleEditUser(user.id);
+                            }}
+                            className="text-blue-600 hover:text-blue-900 text-xs px-2 py-1 border border-blue-300 rounded hover:bg-blue-50"
+                          >
+                            編集
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); // Prevent row click
+                              handleDeleteUser(user.id, user.name);
+                            }}
+                            disabled={deletingUserId === user.id}
+                            className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-1 border border-red-300 rounded hover:bg-red-50"
+                          >
+                            {deletingUserId === user.id ? '削除中...' : '削除'}
+                          </button>
+                        </div>
+                        {selectedHospitalId && (
+                          <div className="flex gap-1">
+                            {/* Show Add button only if user is NOT in the selected hospital */}
+                            {user.hospital_id !== selectedHospitalId && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent row click
+                                  handleAddUserToHospital(user.id);
+                                }}
+                                disabled={managingUserId === user.id}
+                                className="text-green-600 hover:text-green-900 disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-1 border border-green-300 rounded hover:bg-green-50"
+                                title={`${hospitals.find(h => h.id === selectedHospitalId)?.name}に追加`}
+                              >
+                                {managingUserId === user.id ? '追加中...' : '追加'}
+                              </button>
+                            )}
+                            {/* Show Remove button only if user IS in the selected hospital (and not in filter-only mode or they would be hidden) */}
+                            {user.hospital_id === selectedHospitalId && (showAllUsers || !showAllUsers) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent row click
+                                  handleRemoveUserFromHospital(user.id);
+                                }}
+                                disabled={managingUserId === user.id}
+                                className="text-orange-600 hover:text-orange-900 disabled:opacity-50 disabled:cursor-not-allowed text-xs px-2 py-1 border border-orange-300 rounded hover:bg-orange-50"
+                                title={`${hospitals.find(h => h.id === selectedHospitalId)?.name}から削除`}
+                              >
+                                {managingUserId === user.id ? '削除中...' : '削除'}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -473,11 +763,36 @@ const UserListPage = () => {
           {users.length === 0 && !isLoading && (
             <div className="text-center py-12">
               <div className="text-gray-500 text-lg">
-                {searchTerm ? '検索結果が見つかりませんでした' : '利用者が見つかりませんでした'}
+                {searchTerm && !showAllUsers && selectedHospitalId 
+                  ? '検索・フィルター条件に一致する利用者が見つかりませんでした'
+                  : searchTerm 
+                    ? '検索結果が見つかりませんでした'
+                    : !showAllUsers && selectedHospitalId
+                      ? `${hospitals.find(h => h.id === selectedHospitalId)?.name}に所属する利用者が見つかりませんでした`
+                      : showAllUsers
+                        ? '利用者が見つかりませんでした'
+                        : '利用者が見つかりませんでした'
+                }
               </div>
               <div className="text-gray-400 text-sm mt-2">
-                {searchTerm ? '検索条件を変更してください' : '利用者を追加してください'}
+                {searchTerm || (!showAllUsers && selectedHospitalId)
+                  ? 'フィルター条件を変更するか、新しい利用者を追加してください'
+                  : '利用者を追加してください'
+                }
               </div>
+              {(searchTerm || (!showAllUsers && selectedHospitalId)) && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    if (!showAllUsers) {
+                      setSelectedHospitalId(null);
+                    }
+                  }}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  {showAllUsers ? '検索をクリア' : 'フィルターをクリア'}
+                </button>
+              )}
             </div>
           )}
 

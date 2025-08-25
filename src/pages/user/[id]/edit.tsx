@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import { User, UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions, OfficeOptions } from '../../../types/user';
+import { User, UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions, HospitalOptions } from '../../../types/user';
 import { getUser, updateUser } from '../../../api/users';
+import { getHospitalList, Hospital } from '../../../api/hospitals';
 
 const UserEdit = () => {
   const router = useRouter();
@@ -18,7 +19,7 @@ const UserEdit = () => {
     weight: 0,
     height: 0,
     address: '',
-    office: 'おうちのカンゴ',
+    hospital: 'おうちのカンゴ',
     gateway_id: '',
     uid: '',
     device_id: '',
@@ -29,6 +30,9 @@ const UserEdit = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [isLoadingHospitals, setIsLoadingHospitals] = useState(true);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
 
   // Load user data
   useEffect(() => {
@@ -50,13 +54,17 @@ const UserEdit = () => {
               weight: user.weight || 0,
               height: user.height || 0,
               address: user.address || '',
-              office: user.office || 'おうちのカンゴ',
+              hospital: user.hospital_name || user.hospital || 'おうちのカンゴ',
               gateway_id: user.gateway_id || '',
               uid: user.uid || '',
               device_id: user.device_id || '',
               vital_device: 'remony',
               notification_target: 'line'
             });
+            // Set the selected hospital ID if available
+            if (user.hospital_id) {
+              setSelectedHospitalId(user.hospital_id);
+            }
           } else {
             toast.error('利用者情報の取得に失敗しました');
             router.push('/users');
@@ -73,6 +81,29 @@ const UserEdit = () => {
       fetchUser();
     }
   }, [id, router]);
+
+  // Fetch hospital list on component mount
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      setIsLoadingHospitals(true);
+      try {
+        const response = await getHospitalList();
+        if (response.success && response.hospitals) {
+          setHospitals(response.hospitals);
+        } else {
+          console.error('Failed to fetch hospitals:', response.message);
+          toast.error('病院リストの読み込みに失敗しました');
+        }
+      } catch (error) {
+        console.error('Error fetching hospitals:', error);
+        toast.error('病院リストの読み込み中にエラーが発生しました');
+      } finally {
+        setIsLoadingHospitals(false);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -183,8 +214,16 @@ const UserEdit = () => {
       // Debug logging to check gender value before update
       console.log('Edit page - Form data gender:', formData.gender, typeof formData.gender);
       console.log('Edit page - Form data being sent:', formData);
+      console.log('Edit page - Selected hospital ID:', selectedHospitalId);
       
-      const result = await updateUser(parseInt(id as string), formData);
+      // Create updated form data with hospital_id
+      const updatedFormData = {
+        ...formData,
+        hospital_id: selectedHospitalId || 1,
+        hospital_name: formData.hospital
+      };
+      
+      const result = await updateUser(parseInt(id as string), updatedFormData);
       
       if (result.success) {
         toast.success('利用者情報を更新しました', {
@@ -367,24 +406,55 @@ const UserEdit = () => {
               {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
             </div>
 
-            {/* Office */}
-            <div>
-              <label htmlFor="office" className="block text-sm font-medium text-gray-700 mb-2">
-                事業所
-              </label>
-              <select
-                id="office"
-                name="office"
-                value={formData.office}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              >
-                {OfficeOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                          {/* Hospital */}
+              <div>
+                <label htmlFor="hospital" className="block text-sm font-medium text-gray-700 mb-2">
+                  病院/医院
+                </label>
+                                  <select
+                    id="hospital"
+                    name="hospital"
+                    value={selectedHospitalId || ''}
+                    onChange={(e) => {
+                      const hospitalId = e.target.value ? parseInt(e.target.value) : null;
+                      setSelectedHospitalId(hospitalId);
+                      if (hospitalId) {
+                        const selectedHospital = hospitals.find(h => h.id === hospitalId);
+                        if (selectedHospital) {
+                          setFormData(prev => ({ ...prev, hospital: selectedHospital.name }));
+                        }
+                      } else {
+                        setFormData(prev => ({ ...prev, hospital: '' }));
+                      }
+                    }}
+                    disabled={isLoadingHospitals}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="">病院を選択してください</option>
+                    {isLoadingHospitals ? (
+                      <option value="" disabled>読み込み中...</option>
+                    ) : (
+                      <>
+                        {hospitals.length > 0 ? (
+                          hospitals.map(hospital => (
+                            <option key={hospital.id} value={hospital.id}>
+                              {hospital.name}
+                            </option>
+                          ))
+                        ) : (
+                          // Fallback to static options if API fails
+                          HospitalOptions.map((option, index) => (
+                            <option key={option.value} value={index + 1}>
+                              {option.label}
+                            </option>
+                          ))
+                        )}
+                      </>
+                    )}
+                  </select>
+                {isLoadingHospitals && (
+                  <p className="text-sm text-gray-500 mt-1">病院リストを読み込んでいます...</p>
+                )}
             </div>
 
             {/* Gender */}

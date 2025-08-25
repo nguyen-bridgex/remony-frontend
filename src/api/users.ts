@@ -41,6 +41,7 @@ export interface GetUsersParams {
     search?: string;
     order_by?: string;
     order_direction?: 'ASC' | 'DESC';
+    hospital_id?: number;
 }
 
 export const getUsers = async (params: GetUsersParams = {}): Promise<GetUsersResponse> => {
@@ -189,7 +190,7 @@ export const deleteUser = async (userId: number): Promise<DeleteUserResponse> =>
 
 export const updateUser = async (userId: number, userData: UserFormData): Promise<GetUserResponse> => {
     try {
-        const response = await fetch('/api/updateUser', {
+        const response = await fetch('/api/updateUserinfo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

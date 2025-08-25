@@ -21,6 +21,22 @@ const nextConfig = {
         destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/get-userinfo/:path*`,
       },
       {
+        source: '/api/updateUserinfo/:path*',
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/update-userinfo/:path*`,
+      },
+      {
+        source: '/api/getHospitalList/:path*',
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/get-hospital-list/:path*`,
+      },
+      {
+        source: '/api/addUserToHospital/:path*',
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/hospital/add-user/:path*`,
+      },
+      {
+        source: '/api/removeUserFromHospital/:path*',
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/hospital/remove-user/:path*`,
+      },
+      {
         source: '/api/registUser/:path*',
         destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/regist-user/:path*`,
       },

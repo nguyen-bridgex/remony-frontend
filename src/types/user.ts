@@ -1,3 +1,10 @@
+// Hospital interface for reference
+export interface Hospital {
+  id: number;
+  name: string;
+  address: string | null;
+}
+
 export interface User {
   id: number;
   name: string; // 日本語名前をサポート
@@ -10,7 +17,9 @@ export interface User {
   weight: number;
   height: number;
   address: string; // 住所を追加
-  office?: string; // 事業所
+  hospital?: string; // 病院/医院 (backwards compatibility)
+  hospital_id?: number; // 病院ID from API
+  hospital_name?: string; // 病院名 from API
   gateway_id?: string; // ゲートウェイID
   uid?: string; // UID
   device_id?: string; // デバイスID
@@ -38,7 +47,9 @@ export interface UserFormData {
   weight: number;
   height: number;
   address: string; // 住所を追加
-  office: string; // 事業所
+  hospital: string; // 病院/医院 (backwards compatibility)
+  hospital_id?: number; // 病院ID for API
+  hospital_name?: string; // 病院名 for API
   gateway_id: string; // ゲートウェイID
   uid: string; // UID
   device_id: string; // デバイスID
@@ -51,7 +62,8 @@ export const GenderOptions = [
   { value: 0, label: '女性' }
 ];
 
-export const OfficeOptions = [
+// Default hospital options - will be replaced by dynamic API call
+export const HospitalOptions = [
   { value: 'おうちのカンゴ', label: 'おうちのカンゴ' },
   { value: 'おうちのカンゴ代々木上原サテライト', label: 'おうちのカンゴ代々木上原サテライト' },
   { value: 'おうちのカンゴ上池台サテライト', label: 'おうちのカンゴ上池台サテライト' },

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import toast from 'react-hot-toast';
-import { User, UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions, OfficeOptions } from '../../types/user';
+import { User, UserFormData, GenderOptions, VitalDeviceOptions, NotificationTargetOptions, HospitalOptions } from '../../types/user';
 import { registUser } from '../../api/users';
+import { getHospitalList, Hospital } from '../../api/hospitals';
 
 const UserRegister = () => {
   const router = useRouter();
@@ -17,7 +18,7 @@ const UserRegister = () => {
     weight: 0,
     height: 0,
     address: '',
-    office: 'おうちのカンゴ',
+    hospital: 'おうちのカンゴ',
     gateway_id: '',
     uid: '',
     device_id: '',
@@ -25,8 +26,41 @@ const UserRegister = () => {
     notification_target: 'line'
   });
 
+  const [selectedHospitalId, setSelectedHospitalId] = useState<number | null>(null);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [isLoadingHospitals, setIsLoadingHospitals] = useState(true);
+
+  // Fetch hospital list on component mount
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      setIsLoadingHospitals(true);
+      try {
+        const response = await getHospitalList();
+        if (response.success && response.hospitals) {
+          setHospitals(response.hospitals);
+          // Set default to first hospital if available
+          if (response.hospitals.length > 0) {
+            const defaultHospital = response.hospitals[0];
+            setSelectedHospitalId(defaultHospital.id);
+            setFormData(prev => ({ ...prev, hospital: defaultHospital.name }));
+          }
+        } else {
+          console.error('Failed to fetch hospitals:', response.message);
+          toast.error('病院リストの読み込みに失敗しました');
+        }
+      } catch (error) {
+        console.error('Error fetching hospitals:', error);
+        toast.error('病院リストの読み込み中にエラーが発生しました');
+      } finally {
+        setIsLoadingHospitals(false);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -172,7 +206,9 @@ const UserRegister = () => {
         weight: formData.weight,
         height: formData.height,
         address: formData.address,
-        office: formData.office,
+        hospital: formData.hospital,
+        hospital_id: selectedHospitalId || undefined,
+        hospital_name: formData.hospital,
         gateway_id: formData.gateway_id || undefined,
         uid: formData.uid || undefined,
         device_id: formData.device_id || undefined
@@ -352,24 +388,55 @@ const UserRegister = () => {
               {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
             </div>
 
-            {/* Office */}
+            {/* Hospital */}
             <div>
-              <label htmlFor="office" className="block text-sm font-medium text-gray-700 mb-2">
-                事業所
+              <label htmlFor="hospital" className="block text-sm font-medium text-gray-700 mb-2">
+                病院/医院
               </label>
-              <select
-                id="office"
-                name="office"
-                value={formData.office}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              >
-                {OfficeOptions.map(option => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                                <select
+                    id="hospital"
+                    name="hospital"
+                    value={selectedHospitalId || ''}
+                    onChange={(e) => {
+                      const hospitalId = e.target.value ? parseInt(e.target.value) : null;
+                      setSelectedHospitalId(hospitalId);
+                      if (hospitalId) {
+                        const selectedHospital = hospitals.find(h => h.id === hospitalId);
+                        if (selectedHospital) {
+                          setFormData(prev => ({ ...prev, hospital: selectedHospital.name }));
+                        }
+                      } else {
+                        setFormData(prev => ({ ...prev, hospital: '' }));
+                      }
+                    }}
+                    disabled={isLoadingHospitals}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="">病院を選択してください</option>
+                    {isLoadingHospitals ? (
+                      <option value="" disabled>読み込み中...</option>
+                    ) : (
+                      <>
+                        {hospitals.length > 0 ? (
+                          hospitals.map(hospital => (
+                            <option key={hospital.id} value={hospital.id}>
+                              {hospital.name}
+                            </option>
+                          ))
+                        ) : (
+                          // Fallback to static options if API fails
+                          HospitalOptions.map((option, index) => (
+                            <option key={option.value} value={index + 1}>
+                              {option.label}
+                            </option>
+                          ))
+                        )}
+                      </>
+                    )}
+                  </select>
+              {isLoadingHospitals && (
+                <p className="text-sm text-gray-500 mt-1">病院リストを読み込んでいます...</p>
+              )}
             </div>
 
             {/* Device Information */}
