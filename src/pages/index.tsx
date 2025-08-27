@@ -16,6 +16,10 @@ const Home: NextPage = () => {
     router.push('/user/1/setting'); 
   };
 
+  const navigateToHospitalManagement = () => {
+    router.push('/hospitals');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
       <div className="max-w-6xl mx-auto px-4 py-16 text-center">
@@ -30,7 +34,7 @@ const Home: NextPage = () => {
             新しい利用者の登録、アラート設定、すべての情報を一元管理できます。
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
             {/* Register User Card */}
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-8 hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:scale-105"
                  onClick={navigateToRegister}>
@@ -88,6 +92,26 @@ const Home: NextPage = () => {
                 onClick={navigateToAlertSettings}
               >
                 設定管理
+              </button>
+            </div>
+
+            {/* Hospital Management Card */}
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-8 hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:scale-105"
+                 onClick={navigateToHospitalManagement}>
+              <div className="flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mx-auto mb-6">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">事業所管理</h2>
+              <p className="text-gray-600 mb-6">
+                事業所の登録・編集・削除を行い、利用者の所属先を管理できます。
+              </p>
+              <button 
+                className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                onClick={navigateToHospitalManagement}
+              >
+                管理画面
               </button>
             </div>
           </div>

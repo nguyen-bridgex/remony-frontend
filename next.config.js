@@ -33,6 +33,18 @@ const nextConfig = {
         destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/hospital/add-user/:path*`,
       },
       {
+        source: '/api/addHospital/:path*',
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/hospital/new/:path*`,
+      },
+      {
+        source: '/api/editHospital/:path*',
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/hospital/edit/:path*`,
+      },
+      {
+        source: '/api/removeHospital/:path*',
+        destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/hospital/remove/:path*`,
+      },
+      {
         source: '/api/removeUserFromHospital/:path*',
         destination: `${process.env.NEXT_PUBLIC_LAMBDA_API_URL || 'http://localhost:3000'}/hospital/remove-user/:path*`,
       },

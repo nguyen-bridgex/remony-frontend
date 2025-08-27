@@ -26,6 +26,28 @@ export interface HospitalOperationResponse {
   message?: string;
 }
 
+// New interfaces for hospital CRUD
+export interface CreateHospitalRequest {
+  name: string;
+  address?: string;
+}
+
+export interface EditHospitalRequest {
+  id: number;
+  name: string;
+  address?: string;
+}
+
+export interface DeleteHospitalRequest {
+  id: number;
+}
+
+export interface CreateHospitalResponse {
+  success: boolean;
+  hospital?: Hospital;
+  message?: string;
+}
+
 // API Functions
 export const getHospitalList = async (): Promise<GetHospitalListResponse> => {
   try {
@@ -34,97 +56,140 @@ export const getHospitalList = async (): Promise<GetHospitalListResponse> => {
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result = await response.json();
-    
-    if (result.success && result.hospitals && Array.isArray(result.hospitals)) {
-      return {
-        success: true,
-        hospitals: result.hospitals,
-      };
-    } else {
-      throw new Error('Invalid response structure: hospitals array not found');
-    }
+    return await response.json();
   } catch (error) {
-    console.error('Error getting hospital list:', error);
+    console.error('Error fetching hospital list:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'An error occurred while getting hospital list',
+      message: 'Failed to fetch hospital list'
     };
   }
 };
 
-export const addUserToHospital = async (
-  request: AddUserToHospitalRequest
-): Promise<HospitalOperationResponse> => {
+export const addUserToHospital = async (data: AddUserToHospitalRequest): Promise<HospitalOperationResponse> => {
   try {
     const response = await fetch('/api/addUserToHospital', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result = await response.json();
-    
-    if (result.success) {
-      return {
-        success: true,
-        message: 'User successfully added to hospital',
-      };
-    } else {
-      throw new Error(result.message || 'Failed to add user to hospital');
-    }
+    return await response.json();
   } catch (error) {
     console.error('Error adding user to hospital:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'An error occurred while adding user to hospital',
+      message: 'Failed to add user to hospital'
     };
   }
 };
 
-export const removeUserFromHospital = async (
-  request: RemoveUserFromHospitalRequest
-): Promise<HospitalOperationResponse> => {
+export const removeUserFromHospital = async (data: RemoveUserFromHospitalRequest): Promise<HospitalOperationResponse> => {
   try {
     const response = await fetch('/api/removeUserFromHospital', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result = await response.json();
-    
-    if (result.success) {
-      return {
-        success: true,
-        message: 'User successfully removed from hospital',
-      };
-    } else {
-      throw new Error(result.message || 'Failed to remove user from hospital');
-    }
+    return await response.json();
   } catch (error) {
     console.error('Error removing user from hospital:', error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'An error occurred while removing user from hospital',
+      message: 'Failed to remove user from hospital'
+    };
+  }
+};
+
+// New CRUD operations for hospitals
+export const createHospital = async (data: CreateHospitalRequest): Promise<CreateHospitalResponse> => {
+  try {
+    const response = await fetch('/api/addHospital', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating hospital:', error);
+    return {
+      success: false,
+      message: 'Failed to create hospital'
+    };
+  }
+};
+
+export const editHospital = async (data: EditHospitalRequest): Promise<HospitalOperationResponse> => {
+  try {
+    const response = await fetch('/api/editHospital', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error editing hospital:', error);
+    return {
+      success: false,
+      message: 'Failed to edit hospital'
+    };
+  }
+};
+
+export const deleteHospital = async (data: DeleteHospitalRequest): Promise<HospitalOperationResponse> => {
+  try {
+    const response = await fetch('/api/removeHospital', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting hospital:', error);
+    return {
+      success: false,
+      message: 'Failed to delete hospital'
     };
   }
 }; 
