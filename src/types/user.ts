@@ -17,9 +17,9 @@ export interface User {
   weight: number;
   height: number;
   address: string; // 住所を追加
-  hospital?: string; // 病院/医院 (backwards compatibility)
-  hospital_id?: number; // 病院ID from API
-  hospital_name?: string; // 病院名 from API
+  hospital?: string; // 事業所/医院 (backwards compatibility)
+  hospital_id?: number; // 事業所ID from API
+  hospital_name?: string; // 事業所名 from API
   gateway_id?: string; // ゲートウェイID
   uid?: string; // UID
   device_id?: string; // デバイスID
@@ -47,9 +47,9 @@ export interface UserFormData {
   weight: number;
   height: number;
   address: string; // 住所を追加
-  hospital: string; // 病院/医院 (backwards compatibility)
-  hospital_id?: number; // 病院ID for API
-  hospital_name?: string; // 病院名 for API
+  hospital: string; // 事業所/医院 (backwards compatibility)
+  hospital_id?: number; // 事業所ID for API
+  hospital_name?: string; // 事業所名 for API
   gateway_id: string; // ゲートウェイID
   uid: string; // UID
   device_id: string; // デバイスID

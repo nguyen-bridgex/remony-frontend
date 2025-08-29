@@ -119,11 +119,11 @@ const UserListPage = () => {
           setHospitals(response.hospitals);
         } else {
           console.error('Failed to fetch hospitals:', response.message);
-          toast.error('病院リストの取得に失敗しました');
+          toast.error('事業所リストの取得に失敗しました');
         }
       } catch (error) {
         console.error('Error fetching hospitals:', error);
-        toast.error('病院リストの取得中にエラーが発生しました');
+        toast.error('事業所リストの取得中にエラーが発生しました');
       } finally {
         setIsLoadingHospitals(false);
       }
@@ -254,8 +254,8 @@ const UserListPage = () => {
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-white">病院利用者管理</h1>
-                <p className="text-blue-100 mt-2">病院別利用者の管理と割り当て</p>
+                <h1 className="text-3xl font-bold text-white">事業所利用者管理</h1>
+                <p className="text-blue-100 mt-2">事業所別利用者の管理と割り当て</p>
               </div>
               <div className="flex gap-3">
                 <button
@@ -278,13 +278,13 @@ const UserListPage = () => {
           <div className="p-6 border-b border-gray-200 bg-gray-50">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-2">病院選択</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">事業所選択</label>
                 <select
                   value={selectedHospitalId || ''}
                   onChange={handleHospitalFilterChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
                 >
-                  <option value="">病院を選択してください</option>
+                  <option value="">事業所を選択してください</option>
                   {hospitals.map(hospital => (
                     <option key={hospital.id} value={hospital.id}>
                       {hospital.name}
@@ -331,7 +331,7 @@ const UserListPage = () => {
                       </div>
                     ) : hospitalUsers.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
-                        <p>この病院に所属する利用者はいません</p>
+                        <p>この事業所に所属する利用者はいません</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
@@ -432,10 +432,10 @@ const UserListPage = () => {
           ) : (
             <div className="p-12 text-center">
               <div className="text-gray-500 text-lg">
-                病院を選択してください
+                事業所を選択してください
               </div>
               <p className="text-gray-400 text-sm mt-2">
-                上記のドロップダウンから管理する病院を選んでください
+                上記のドロップダウンから管理する事業所を選んでください
               </p>
             </div>
           )}

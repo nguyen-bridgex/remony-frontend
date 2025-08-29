@@ -3,6 +3,13 @@ export interface Hospital {
   id: number;
   name: string;
   address: string | null;
+  service_account: string | null;
+  client_id: string | null;
+  client_secret: string | null;
+  bot_no: string | null;
+  token_url: string | null;
+  api_base_url: string | null;
+  private_key: string | null;
 }
 
 export interface GetHospitalListResponse {
@@ -30,12 +37,26 @@ export interface HospitalOperationResponse {
 export interface CreateHospitalRequest {
   name: string;
   address?: string;
+  service_account?: string;
+  client_id?: string;
+  client_secret?: string;
+  bot_no?: string;
+  token_url?: string;
+  api_base_url?: string;
+  private_key?: string;
 }
 
 export interface EditHospitalRequest {
   id: number;
   name: string;
   address?: string;
+  service_account?: string;
+  client_id?: string;
+  client_secret?: string;
+  bot_no?: string;
+  token_url?: string;
+  api_base_url?: string;
+  private_key?: string;
 }
 
 export interface DeleteHospitalRequest {

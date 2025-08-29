@@ -92,11 +92,11 @@ const UserEdit = () => {
           setHospitals(response.hospitals);
         } else {
           console.error('Failed to fetch hospitals:', response.message);
-          toast.error('病院リストの読み込みに失敗しました');
+          toast.error('事業所リストの読み込みに失敗しました');
         }
       } catch (error) {
         console.error('Error fetching hospitals:', error);
-        toast.error('病院リストの読み込み中にエラーが発生しました');
+        toast.error('事業所リストの読み込み中にエラーが発生しました');
       } finally {
         setIsLoadingHospitals(false);
       }
@@ -409,7 +409,7 @@ const UserEdit = () => {
                           {/* Hospital */}
               <div>
                 <label htmlFor="hospital" className="block text-sm font-medium text-gray-700 mb-2">
-                  病院/医院
+                  事業所/医院
                 </label>
                                   <select
                     id="hospital"
@@ -430,7 +430,7 @@ const UserEdit = () => {
                     disabled={isLoadingHospitals}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   >
-                    <option value="">病院を選択してください</option>
+                    <option value="">事業所を選択してください</option>
                     {isLoadingHospitals ? (
                       <option value="" disabled>読み込み中...</option>
                     ) : (
@@ -453,7 +453,7 @@ const UserEdit = () => {
                     )}
                   </select>
                 {isLoadingHospitals && (
-                  <p className="text-sm text-gray-500 mt-1">病院リストを読み込んでいます...</p>
+                  <p className="text-sm text-gray-500 mt-1">事業所リストを読み込んでいます...</p>
                 )}
             </div>
 
