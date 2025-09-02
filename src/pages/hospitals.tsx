@@ -28,6 +28,8 @@ const HospitalManagementPage = () => {
   
   // State
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [filteredHospitals, setFilteredHospitals] = useState<Hospital[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingHospitalId, setDeletingHospitalId] = useState<number | null>(null);
@@ -50,6 +52,34 @@ const HospitalManagementPage = () => {
     private_key: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Search functionality
+  const filterHospitals = (hospitals: Hospital[], searchTerm: string) => {
+    if (!searchTerm.trim()) {
+      return hospitals;
+    }
+    
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    return hospitals.filter(hospital => {
+      return (
+        hospital.name.toLowerCase().includes(lowerSearchTerm) ||
+        (hospital.address && hospital.address.toLowerCase().includes(lowerSearchTerm)) ||
+        (hospital.service_account && hospital.service_account.toLowerCase().includes(lowerSearchTerm)) ||
+        (hospital.client_id && hospital.client_id.toLowerCase().includes(lowerSearchTerm)) ||
+        (hospital.client_secret && hospital.client_secret.toLowerCase().includes(lowerSearchTerm)) ||
+        (hospital.bot_no && hospital.bot_no.toLowerCase().includes(lowerSearchTerm)) ||
+        (hospital.token_url && hospital.token_url.toLowerCase().includes(lowerSearchTerm)) ||
+        (hospital.api_base_url && hospital.api_base_url.toLowerCase().includes(lowerSearchTerm)) ||
+        (hospital.private_key && hospital.private_key.toLowerCase().includes(lowerSearchTerm)) ||
+        hospital.id.toString().includes(lowerSearchTerm)
+      );
+    });
+  };
+
+  // Update filtered hospitals when search term or hospitals change
+  useEffect(() => {
+    setFilteredHospitals(filterHospitals(hospitals, searchTerm));
+  }, [hospitals, searchTerm]);
 
   // Fetch hospitals
   const fetchHospitals = async () => {
@@ -76,6 +106,15 @@ const HospitalManagementPage = () => {
   // Navigation
   const handleGoHome = () => {
     router.push('/');
+  };
+
+  // Search handling
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
   };
 
   // Form handling
@@ -554,79 +593,183 @@ const HospitalManagementPage = () => {
             </div>
           </div>
 
+          {/* Search Bar */}
+          <div className="p-6 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="事業所名、住所、ID、その他の情報で検索..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent focus:ring-blue-500 transition-all text-gray-700 placeholder-gray-500"
+                />
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={clearSearch}
+                  className="px-4 py-3 text-gray-500 hover:text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  title="検索をクリア"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+            {searchTerm && (
+              <div className="mt-2 text-sm text-gray-600">
+                検索結果: <span className="font-semibold text-blue-600">{filteredHospitals.length}</span> 件
+              </div>
+            )}
+          </div>
+
+
+
           {/* Hospital List */}
           <div className="p-6">
-            {hospitals.length === 0 ? (
+            {filteredHospitals.length === 0 ? (
               <div className="text-center py-12">
-                                 <div className="text-gray-500 text-lg">登録されている事業所がありません</div>
-                 <p className="text-gray-400 text-sm mt-2">上のボタンから新しい事業所を登録してください</p>
-                <button
-                  onClick={openCreateModal}
-                  className="mt-4 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                                     事業所を登録
-                </button>
+                {searchTerm ? (
+                  <>
+                    <div className="text-gray-500 text-lg font-semibold mb-2">検索結果が見つかりません</div>
+                    <p className="text-gray-400 text-sm mb-4">「{searchTerm}」に一致する事業所が見つかりませんでした</p>
+                    <button
+                      onClick={clearSearch}
+                      className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mr-2"
+                    >
+                      検索をクリア
+                    </button>
+                    <button
+                      onClick={openCreateModal}
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      新しい事業所を登録
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-gray-500 text-lg font-semibold mb-2">登録されている事業所がありません</div>
+                    <p className="text-gray-400 text-sm mb-4">上のボタンから新しい事業所を登録してください</p>
+                    <button
+                      onClick={openCreateModal}
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      事業所を登録
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {hospitals.map(hospital => (
-                  <div key={hospital.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center">
-                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="text-lg font-semibold text-gray-900">{hospital.name}</h3>
-                          <p className="text-sm text-gray-500">ID: {hospital.id}</p>
+              <>
+                <div className="mb-6">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-gray-800">
+                      事業所一覧 ({filteredHospitals.length}件)
+                    </h2>
+                    {searchTerm && (
+                      <div className="text-sm text-gray-600">
+                        検索: <span className="font-semibold text-blue-600">"{searchTerm}"</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                  {filteredHospitals.map(hospital => (
+                    <div key={hospital.id} className="bg-white border border-gray-200 rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center">
+                          <div className="h-12 w-12 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                          </div>
+                          <div className="ml-4">
+                            <h3 className="text-xl font-bold text-gray-900 mb-1">{hospital.name}</h3>
+                            <p className="text-sm text-gray-500 font-medium">ID: {hospital.id}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">住所:</span> {hospital.address || '未設定'}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">サービスアカウント:</span> {hospital.service_account || '未設定'}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">クライアントID:</span> {hospital.client_id || '未設定'}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">ボット番号:</span> {hospital.bot_no || '未設定'}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">トークンURL:</span> {hospital.token_url || '未設定'}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">API Base URL:</span> {hospital.api_base_url || '未設定'}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">プライベートキー:</span> {hospital.private_key ? '設定済み' : '未設定'}
-                      </p>
-                    </div>
+                      
+                      {/* Content */}
+                      <div className="space-y-4 mb-6">
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">基本情報</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700 mb-1">住所</p>
+                              <p className="text-sm text-gray-600 italic">{hospital.address || '未設定'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-gray-700 mb-1">サービスアカウント</p>
+                              <p className="text-sm text-gray-600 italic">{hospital.service_account || '未設定'}</p>
+                            </div>
+                          </div>
+                        </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => openEditModal(hospital)}
-                        className="flex-1 px-3 py-2 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200 transition-colors"
-                      >
-                        編集
-                      </button>
-                      <button
-                        onClick={() => handleDeleteHospital(hospital)}
-                        disabled={deletingHospitalId === hospital.id}
-                        className="flex-1 px-3 py-2 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {deletingHospitalId === hospital.id ? '削除中...' : '削除'}
-                      </button>
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <h4 className="text-sm font-bold text-blue-700 mb-3 uppercase tracking-wide">認証情報</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-semibold text-blue-700 mb-1">クライアントID</p>
+                              <p className="text-sm text-blue-600 italic">{hospital.client_id || '未設定'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-blue-700 mb-1">クライアントシークレット</p>
+                              <p className="text-sm text-blue-600 italic">{hospital.client_secret ? '***設定済み***' : '未設定'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-blue-700 mb-1">プライベートキー</p>
+                              <p className="text-sm text-blue-600 italic">{hospital.private_key ? '***設定済み***' : '未設定'}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-green-50 rounded-lg p-4">
+                          <h4 className="text-sm font-bold text-green-700 mb-3 uppercase tracking-wide">API設定</h4>
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-semibold text-green-700 mb-1">ボット番号</p>
+                              <p className="text-sm text-green-600 italic">{hospital.bot_no || '未設定'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-green-700 mb-1">トークンURL</p>
+                              <p className="text-sm text-green-600 italic break-all">{hospital.token_url || '未設定'}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-green-700 mb-1">API Base URL</p>
+                              <p className="text-sm text-green-600 italic break-all">{hospital.api_base_url || '未設定'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => openEditModal(hospital)}
+                          className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+                        >
+                          編集
+                        </button>
+                        <button
+                          onClick={() => handleDeleteHospital(hospital)}
+                          disabled={deletingHospitalId === hospital.id}
+                          className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md hover:shadow-lg"
+                        >
+                          {deletingHospitalId === hospital.id ? '削除中...' : '削除'}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>
