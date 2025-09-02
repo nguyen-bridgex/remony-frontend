@@ -674,7 +674,7 @@ const HospitalManagementPage = () => {
                     </h2>
                     {searchTerm && (
                       <div className="text-sm text-gray-600">
-                        検索: <span className="font-semibold text-blue-600">"{searchTerm}"</span>
+                        検索: <span className="font-semibold text-blue-600">&quot;{searchTerm}&quot;</span>
                       </div>
                     )}
                   </div>
