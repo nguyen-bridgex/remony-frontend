@@ -223,6 +223,10 @@ const UserListPage = () => {
     router.push(`/user/${userId}`);
   };
 
+  const handleEditUser = (userId: number) => {
+    router.push(`/user/${userId}/edit`);
+  };
+
   // Calculate age
   const calculateAge = (birthday: string) => {
     const birthDate = new Date(birthday);
@@ -336,7 +340,16 @@ const UserListPage = () => {
                     ) : (
                       <div className="space-y-3">
                         {hospitalUsers.map(user => (
-                          <div key={user.id} className="bg-white rounded-lg p-4 shadow border hover:shadow-md transition-shadow">
+                          <div 
+                            key={user.id} 
+                            className="bg-white rounded-lg p-4 shadow border hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={(e) => {
+                              // Only navigate if the click is not on a button
+                              if (!(e.target as HTMLElement).closest('button')) {
+                                handleUserClick(user.id);
+                              }
+                            }}
+                          >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center gap-3">
@@ -346,10 +359,7 @@ const UserListPage = () => {
                                     </span>
                                   </div>
                                   <div>
-                                    <h3 
-                                      className="font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                                      onClick={() => handleUserClick(user.id)}
-                                    >
+                                    <h3 className="font-medium text-gray-900 hover:text-blue-600">
                                       {user.name}
                                     </h3>
                                     <p className="text-sm text-gray-500">ID: {user.id}</p>
@@ -362,13 +372,21 @@ const UserListPage = () => {
                                   <div>メール: {user.email}</div>
                                 </div>
                               </div>
-                              <button
-                                onClick={() => handleRemoveUserFromHospital(user.id)}
-                                disabled={managingUserId === user.id}
-                                className="px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200 disabled:opacity-50"
-                              >
-                                {managingUserId === user.id ? '削除中...' : '削除'}
-                              </button>
+                              <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => handleEditUser(user.id)}
+                                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200 transition-colors"
+                                >
+                                  編集
+                                </button>
+                                <button
+                                  onClick={() => handleRemoveUserFromHospital(user.id)}
+                                  disabled={managingUserId === user.id}
+                                  className="px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200 disabled:opacity-50"
+                                >
+                                  {managingUserId === user.id ? '削除中...' : '削除'}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -397,7 +415,16 @@ const UserListPage = () => {
                     ) : (
                       <div className="space-y-3">
                         {nonHospitalUsers.map(user => (
-                          <div key={user.id} className="bg-white rounded-lg p-3 shadow border hover:shadow-md transition-shadow">
+                          <div 
+                            key={user.id} 
+                            className="bg-white rounded-lg p-3 shadow border hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={(e) => {
+                              // Only navigate if the click is not on a button
+                              if (!(e.target as HTMLElement).closest('button')) {
+                                handleUserClick(user.id);
+                              }
+                            }}
+                          >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <div className="h-8 w-8 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
@@ -413,13 +440,21 @@ const UserListPage = () => {
                                   )}
                                 </div>
                               </div>
-                              <button
-                                onClick={() => handleAddUserToHospital(user.id)}
-                                disabled={managingUserId === user.id}
-                                className="px-3 py-1 bg-green-100 text-green-800 rounded text-sm hover:bg-green-200 disabled:opacity-50"
-                              >
-                                {managingUserId === user.id ? '追加中...' : '追加'}
-                              </button>
+                              <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => handleEditUser(user.id)}
+                                  className="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200 transition-colors"
+                                >
+                                  編集
+                                </button>
+                                <button
+                                  onClick={() => handleAddUserToHospital(user.id)}
+                                  disabled={managingUserId === user.id}
+                                  className="px-3 py-1 bg-green-100 text-green-800 rounded text-sm hover:bg-green-200 disabled:opacity-50"
+                                >
+                                  {managingUserId === user.id ? '追加中...' : '追加'}
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
